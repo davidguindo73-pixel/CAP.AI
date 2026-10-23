@@ -23,6 +23,10 @@ The real rendering is executed by a connected external model provider. **CAP.AI 
 
 ## Deploy the generation backend
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidguindo73-pixel/CAP.AI)
+
+This Blueprint creates the separate Node API service. Render will ask you to review and approve the deployment.
+
 The GitHub Pages workflow only deploys static files. It does not run Node server code.
 
 1. Open the repository in Render and deploy from the included render.yaml blueprint (or create a Node web service with root directory api, build command npm install, start command npm start).
