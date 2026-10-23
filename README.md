@@ -1,5 +1,9 @@
 # CAP.AI
 
+**Creator:** David Guindo — Creator & Builder; Computer Engineering Student.
+
+CAP.AI is designed around the idea that creative workflows should feel accessible: clear prompts, reference guidance, and advertising briefs in one workspace. Its visual identity uses a restrained black, white, charcoal and silver palette.
+
 CAP.AI is an early-stage creative platform for turning ideas into prompts and AI-generated media. The website is hosted as a static GitHub Pages frontend. A separate Node API service connects it to a remote image/video generation provider.
 
 ## Website
