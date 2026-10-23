@@ -155,7 +155,9 @@ function readInput(body) {
     : (["1k", "2k", "4k"].includes(body.resolution) ? body.resolution : "2k");
   const duration = Math.min(15, Math.max(4, Number.parseInt(body.duration, 10) || 5));
   const multiShots = body.multiShots === true;
-  const videoModel = multiShots ? "kling" : (["seedance", "kling", "kling-turbo"].includes(body.videoModel) ? body.videoModel : "seedance");
+  let videoModel = multiShots ? "kling" : (["seedance", "kling", "kling-turbo", "wan"].includes(body.videoModel) ? body.videoModel : "seedance");
+  if (mode === "image-to-video" && !["kling", "wan"].includes(videoModel)) videoModel = "wan";
+  if (mode !== "image-to-video" && videoModel === "wan") videoModel = "seedance";
   return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind, videoModel, multiShots };
 }
 app.get("/api/health", (_req, res) => {
@@ -203,6 +205,16 @@ app.post("/api/generate", async (req, res, next) => {
         enhance_prompt: false,
         moderation: "auto",
         ...(input.refs.length ? { image_urls: input.refs.filter((_, index) => index < 4) } : {})
+      };
+    } else if (input.mode === "image-to-video" && input.videoModel === "kling") {
+      const klingTier = input.resolution === "4k" ? "4k" : (input.resolution === "1080p" ? "pro" : "std");
+      path = "/kling-video/v3.0/" + klingTier + "/image-to-video";
+      payload = {
+        prompt: input.prompt,
+        image_url: input.refs[0],
+        duration: Math.min(15, Math.max(3, input.duration)),
+        sound: req.body.generateAudio === false ? "off" : "on",
+        multi_shots: input.multiShots
       };
     } else if (input.mode === "video-restyle") {
       path = "/kling-video/o3/video-edit";
