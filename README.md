@@ -14,7 +14,7 @@ CAP.AI is an early-stage creative platform for turning ideas into prompts and AI
 - Text-to-image generation through a campaign-image model.
 - Text-to-video generation with Seedance 2.0, Kling 3.0 Standard/Pro/4K, and Kling 3.0 Turbo options, including duration, aspect ratio, resolution, audio and multi-shot settings.
 - Reference image/video upload using provider-signed uploads; Wan 3.0 and Kling 3.0 image-to-video; Kling O3 video edits for an uploaded clip.
-- Product-ad image and product-ad video modes.
+- Product-ad image and product-ad video modes with structured product name, audience, key benefit, offer, CTA, placement and brand-tone fields.
 - Style direction, camera/motion guidance, aspect-ratio controls and avoid lists.
 - Live job status polling, result previews and a cancel request.
 - Server-side credential handling, origin allowlisting, request validation and basic rate limiting.
