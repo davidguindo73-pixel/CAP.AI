@@ -153,7 +153,9 @@ function readInput(body) {
     ? (["480p", "720p", "1080p", "4k"].includes(body.resolution) ? body.resolution : "720p")
     : (["1k", "2k", "4k"].includes(body.resolution) ? body.resolution : "2k");
   const duration = Math.min(15, Math.max(4, Number.parseInt(body.duration, 10) || 5));
-  return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind };
+  const multiShots = body.multiShots === true;
+  const videoModel = multiShots ? "kling" : (["seedance", "kling"].includes(body.videoModel) ? body.videoModel : "seedance");
+  return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind, videoModel, multiShots };
 }
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -201,7 +203,14 @@ app.post("/api/generate", async (req, res, next) => {
         moderation: "auto",
         ...(input.refs.length ? { image_urls: input.refs.filter((_, index) => index < 4) } : {})
       };
-    } else if (input.mode === "image-to-video" || input.mode === "video-restyle" || input.refs.length) {
+    } else if (input.mode === "video-restyle") {
+      path = "/kling-video/o3/video-edit";
+      payload = {
+        prompt: input.prompt,
+        video_urls: input.refs,
+        mode: input.resolution === "4k" ? "4k" : (["480p", "720p"].includes(input.resolution) ? "std" : "pro")
+      };
+    } else if (input.mode === "image-to-video" || input.refs.length) {
       path = "/alibaba/wan-3.0/reference-to-video";
       payload = {
         prompt: input.prompt,
@@ -210,7 +219,16 @@ app.post("/api/generate", async (req, res, next) => {
         aspect_ratio: input.ratio === "auto" ? "adaptive" : input.ratio,
         generate_audio: req.body.generateAudio !== false,
         enable_thinking: false,
-        ...(input.refs.length ? (req.body.referenceKind === "video" ? { video_urls: input.refs } : { image_urls: input.refs }) : {})
+        ...(input.refs.length ? (input.referenceKind === "video" ? { video_urls: input.refs } : { image_urls: input.refs }) : {})
+      };
+    } else if (input.videoModel === "kling") {
+      path = "/kling-video/v3.0/std/text-to-video";
+      payload = {
+        prompt: input.prompt,
+        duration: Math.min(15, Math.max(3, input.duration)),
+        sound: req.body.generateAudio === false ? "off" : "on",
+        multi_shots: input.multiShots,
+        aspect_ratio: ["16:9", "9:16", "1:1"].includes(input.ratio) ? input.ratio : "16:9"
       };
     } else {
       path = "/bytedance/seedance-2.0/text-to-video";
