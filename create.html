@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Generate AI images, videos and product-ad concepts from CAP.AI with a connected generation API.">
+<meta name="theme-color" content="#050505">
+<title>Create with AI · CAP.AI</title>
+<link rel="icon" href="assets/cap-ai-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+:root{--line:#292929}
+.hero{padding-bottom:22px}
+.workspace{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(320px,.97fr);gap:18px;align-items:start}
+.panel h2{font-size:23px;letter-spacing:-.04em;margin:7px 0 15px}
+.panel p{color:var(--muted)}
+.field textarea{min-height:158px}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.statusline{font-size:13px;color:var(--muted);min-height:22px}
+.pill{border:1px solid #333;border-radius:999px;padding:5px 10px;font-size:11px;color:#c3c3c3}
+.pill.good{border-color:#c6ff3d88;color:var(--lime)}
+.pill.bad{border-color:#ff6a6a88;color:#ff9494}
+.output-area{min-height:340px;border:1px dashed #383838;border-radius:14px;background:#050505;padding:15px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.output-area img,.output-area video{max-width:100%;max-height:65vh;border-radius:10px}
+.output-stack{width:100%;display:grid;gap:16px}
+.output-card{border:1px solid #303030;border-radius:12px;padding:10px;text-align:left}
+.output-card img,.output-card video{width:100%;max-height:500px;object-fit:contain;background:#0a0a0a}
+.ref-preview{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ref-preview img,.ref-preview video{max-width:140px;max-height:110px;border-radius:8px}
+.tips{display:grid;gap:10px}
+.tip{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid #232323}
+.tip:last-child{border-bottom:0}
+.tip-num{color:var(--lime);font-size:12px;font-weight:850}
+.tip p{font-size:13px;margin:0}
+.secret-note{font-size:12px!important;color:#888!important}
+.advanced{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.advanced summary{cursor:pointer;font-weight:750;font-size:13px}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px}
+.small-btn{border-radius:9px;padding:8px 11px;font-weight:700;font-size:12px;border:1px solid #343434;background:#0b0b0b;color:#eee;cursor:pointer}
+.small-btn:hover{border-color:var(--lime);color:var(--lime)}
+.progress-track{height:5px;border-radius:99px;background:#222;overflow:hidden;margin:12px 0}
+.progress-bar{height:100%;width:16%;background:var(--lime);animation:progress 1.4s ease-in-out infinite alternate}
+@keyframes progress{from{transform:translateX(-25%);width:15%}to{transform:translateX(400%);width:35%}}
+@media(max-width:900px){.workspace{grid-template-columns:1fr}.output-area{min-height:220px}}
+@media(max-width:540px){.two-col,.three-col{grid-template-columns:1fr}.panel{padding:16px}.hero h1{font-size:43px}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell nav">
+<a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a>
+<nav class="nav-links" aria-label="Main navigation">
+<a href="index.html">Home</a><a href="create.html" class="active">Create AI</a><a href="studio.html">Prompt Lab</a><a href="examples.html">Examples</a><a href="account.html">Workspace</a><a href="contact.html">Contact</a>
+</nav></div></header>
+<main class="shell">
+<section class="hero">
+<div class="kicker">Creative engine · connected model preview</div>
+<h1>Make the idea.<br><span class="lime">Generate the media.</span></h1>
+<p class="lead">Create images, cinematic video clips, image-to-video animations and product-ad concepts in one workspace. Choose a workflow, guide the look, and generate through a connected media model.</p>
+<div class="notice"><strong>Setup required:</strong> CAP.AI's generation gateway must be deployed and connected to a provider account with model access and credits. CAP.AI does not train its own foundation model yet; this prototype connects a real external image/video model. Never commit provider keys to GitHub.</div>
+<div class="badge-row"><span class="pill">Text → Image</span><span class="pill">Text → Video</span><span class="pill">Image → Video</span><span class="pill">Reference Video</span><span class="pill">Product Ads</span></div>
+</section>
+
+<section class="section">
+<div class="workspace">
+<div class="stack">
+<section class="panel">
+<div class="kicker">01 · Create</div><h2>Creative brief</h2>
+<div class="field"><label for="mode">What are you making?</label>
+<select id="mode">
+<option value="video">Text → Video</option>
+<option value="image">Text → Image</option>
+<option value="image-to-video">Image → Video</option>
+<option value="video-restyle">Reference Video / Restyle</option>
+<option value="ad-video">Product Ad Video</option>
+<option value="ad-image">Product Ad Image</option>
+</select></div>
+<div class="field"><label for="idea">Describe what you want</label>
+<textarea id="idea" maxlength="5000" placeholder="Describe the subject, setting, movement, mood, lighting and final shot."></textarea>
+<div class="row spread"><span class="dim small">Be specific about what moves and what stays consistent.</span><span class="dim small" id="charCount">0 / 5000</span></div></div>
+<div class="field"><label for="avoid">Things to avoid (optional)</label><input id="avoid" maxlength="1000" placeholder="Flicker, warped hands, changing outfit, random text"></div>
+<div class="two-col">
+<div class="field"><label for="style">Visual style</label><select id="style">
+<option value="photorealistic, natural texture, realistic lighting">Photorealistic</option>
+<option value="cinematic composition, dramatic lighting, subtle film grain">Cinematic</option>
+<option value="anime illustration, expressive composition, consistent line art">Anime</option>
+<option value="fashion editorial photography, polished styling">Fashion editorial</option>
+<option value="premium commercial product photography, polished studio lighting">Product commercial</option>
+<option value="stylized 3D render, detailed materials">Stylized 3D</option>
+<option value="surreal dreamlike imagery, layered atmosphere">Surreal / fantasy</option>
+<option value="vintage 35mm film, direct flash, visible grain">Direct flash / vintage</option>
+<option value="documentary style, candid framing, natural light">Documentary</option>
+</select></div>
+<div class="field"><label for="ratio">Aspect ratio</label><select id="ratio">
+<option value="9:16">9:16 · Reels / TikTok</option><option value="16:9">16:9 · YouTube</option><option value="1:1">1:1 · Square</option><option value="4:3">4:3 · Classic</option><option value="3:4">3:4 · Portrait</option><option value="21:9">21:9 · Widescreen</option><option value="auto">Auto · Image only</option>
+</select></div>
+</div>
+<div class="two-col">
+<div class="field"><label for="camera">Camera direction</label><select id="camera">
+<option value="slow cinematic dolly-in">Slow dolly-in</option><option value="smooth orbit around the subject">Orbit / 360°</option><option value="slow tracking shot">Tracking shot</option><option value="handheld movement, subtle camera shake, direct flash">Handheld / direct flash</option><option value="wide establishing shot followed by a deliberate pan">Wide reveal / pan</option><option value="macro close-up, shallow depth of field">Macro / close-up</option><option value="locked-off still camera">Static camera</option>
+</select></div>
+<div class="field"><label for="duration">Clip length (video only)</label><select id="duration"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option><option value="12">12 seconds</option><option value="15">15 seconds</option></select></div>
+</div>
+<div class="three-col">
+<div class="field"><label for="resolution">Resolution</label><select id="resolution"><option value="720p">720p</option><option value="1080p">1080p</option><option value="480p">480p</option><option value="4k">4K (video model dependent)</option><option value="2k">2K (image)</option><option value="1k">1K (image)</option></select></div>
+<div class="field"><label for="quality">Image quality</label><select id="quality"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option><option value="xhigh">Extra high</option><option value="max">Max</option></select></div>
+<div class="field"><label for="audio">Generated audio</label><select id="audio"><option value="true">On</option><option value="false">Off</option></select></div>
+</div>
+<div class="field"><label for="reference">Reference image/video (optional)</label><input id="reference" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime"><p class="dim small">Used as a creative reference for supported workflows. Up to 40 MB per file in this preview. Uploads are sent to the media provider when you generate.</p><div id="referencePreview" class="ref-preview"></div></div>
+<div class="row"><button id="generate" class="button" type="button">Generate media ↗</button><button id="buildPrompt" class="button secondary" type="button">Build prompt only</button><button id="reset" class="small-btn" type="button">Reset</button></div>
+<p class="secret-note">Generation may consume provider credits. Check the provider's current prices and your account limits before submitting.</p>
+</section>
+
+<section class="panel">
+<div class="kicker">02 · Connection</div><h2>Connect the generation engine</h2>
+<p class="small">Use your deployed CAP.AI API URL. If using your own provider key, enter it here; it is kept only in this page's memory and is not saved to browser storage. HTTPS is recommended outside localhost.</p>
+<div class="field"><label for="apiBase">CAP.AI API base URL</label><input id="apiBase" placeholder="https://your-cap-ai-api.onrender.com"></div>
+<div class="two-col">
+<div class="field"><label for="hfKey">Your provider API key (BYOK)</label><input id="hfKey" type="password" autocomplete="off" placeholder="Paste complete key · not saved"></div>
+<div class="field"><label for="appToken">Private CAP.AI access token (only if configured)</label><input id="appToken" type="password" autocomplete="off" placeholder="Optional · not saved"></div>
+</div>
+<div class="row"><button id="checkConnection" class="button secondary" type="button">Check connection</button><span id="connectionBadge" class="pill">Not checked</span></div>
+<p id="connectionStatus" class="statusline" role="status" aria-live="polite">Deploy the API backend and configure credentials to enable generation.</p>
+<details class="advanced"><summary>Backend setup / documentation</summary><p class="small">Deploy the <code>api/</code> folder as a Node 20+ web service. On Render: root directory <code>api</code>, build command <code>npm install</code>, start command <code>npm start</code>. Add allowed website origins under <code>CORS_ORIGINS</code>. Read <a href="api/README.md" target="_blank" rel="noopener noreferrer">the backend setup guide</a> and copy the example environment settings from <code>api/.env.example</code>. The backend is separate from GitHub Pages because Pages only serves static files.</p></details>
+</section>
+</div>
+
+<div class="stack">
+<section class="panel">
+<div class="kicker">03 · Output</div><h2>Your generation</h2>
+<div id="output" class="output-area"><div><div class="icon-tile" style="margin:0 auto 15px">AI</div><strong>Your result will appear here</strong><p class="small">Connect the API, write a brief and select Generate media.</p></div></div>
+<div id="progress" hidden><div class="progress-track"><div class="progress-bar"></div></div><p class="statusline" id="jobStatus" role="status" aria-live="polite">Submitting generation…</p><button id="cancel" class="button secondary small" type="button">Cancel job</button></div>
+<div id="resultStatus" class="statusline" role="status" aria-live="polite" style="margin-top:13px">Nothing generated in this session yet.</div>
+</section>
+<section class="panel">
+<div class="kicker">04 · Workflow features</div><h2>Creative tools</h2>
+<div class="tips">
+<div class="tip"><span class="tip-num">01</span><div><strong>Image and video generation</strong><p>Choose a prompt and send it to a real remote generation model.</p></div></div>
+<div class="tip"><span class="tip-num">02</span><div><strong>Reference guidance</strong><p>Upload a source image or clip to guide supported image/video workflows.</p></div></div>
+<div class="tip"><span class="tip-num">03</span><div><strong>Ad concepts</strong><p>Build a product brief and generate a product-hero image or short ad-video concept.</p></div></div>
+<div class="tip"><span class="tip-num">04</span><div><strong>Camera and style controls</strong><p>Motion, lighting, format and avoidance guidance are added to the creative prompt.</p></div></div>
+</div>
+<div class="notice"><strong>Planned for later:</strong> reusable character identity profiles, multi-shot timeline/storyboards, background removal, audio/voiceover editing, batch variations, user accounts, stored assets and billing. The current API connection is a foundation, not feature parity with a mature creative suite.</div>
+</section>
+</div>
+</div>
+</section>
+</main>
+<footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="small dim">Generation gateway · early preview</span></div><div class="footer-links" style="margin-top:18px"><a href="studio.html">Prompt Lab</a><a href="examples.html">Examples</a><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="contact.html">Feedback</a></div><p class="footer-note">CAP.AI generation requires a deployed backend, provider credentials and available credits. Model capabilities, costs and output quality depend on the selected provider. © <span data-year></span> CAP.AI.</p></div></footer>
+<script src="assets/site.js"></script>
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+const form={mode:$("mode"),idea:$("idea"),avoid:$("avoid"),style:$("style"),ratio:$("ratio"),camera:$("camera"),duration:$("duration"),resolution:$("resolution"),quality:$("quality"),audio:$("audio"),reference:$("reference"),apiBase:$("apiBase"),hfKey:$("hfKey"),appToken:$("appToken")};
+const clientKey="capAiClientIdV1",baseKey="capAiGenerationBaseV1";
+let clientId=localStorage.getItem(clientKey);
+if(!clientId){clientId=(crypto.randomUUID?crypto.randomUUID():("cap_"+Date.now()+"_"+Math.random().toString(36).slice(2)));localStorage.setItem(clientKey,clientId)}
+form.apiBase.value=localStorage.getItem(baseKey)||"";
+let activeJob=null,previewUrl=null,pollTimer=null,requestBusy=false;
+const defaultIdea="A young adult wearing an oversized black hoodie and baggy jeans walks alone through a neon-lit city street at 1 AM after rain. Purple and green lights reflect across wet pavement. Use direct-camera flash, subtle handheld camera shake, natural skin texture, film grain, imperfect focus and an atmospheric mysterious mood. Begin with a medium shot from behind, slowly move around to reveal the subject silhouette, then finish on the neon reflections on the pavement. Keep the outfit, proportions, light direction and environment consistent throughout.";
+if(q.get("idea"))form.idea.value=q.get("idea").slice(0,5000);else form.idea.value=defaultIdea;
+["mode","style","ratio","camera","duration","resolution","quality","audio","avoid"].forEach(k=>{if(q.get(k)&&form[k])form[k].value=q.get(k)});
+$("charCount").textContent=form.idea.value.length+" / 5000";
+function base(){return form.apiBase.value.trim().replace(/\/+$/,"")}
+function clientHeaders(){const h={"Content-Type":"application/json","X-CAP-Client-ID":clientId};if(form.hfKey.value.trim())h["X-HF-API-Key"]=form.hfKey.value.trim();if(form.appToken.value)h["X-CAP-Access-Token"]=form.appToken.value;return h}
+function sayConnection(text,badge,type=""){ $("connectionStatus").textContent=text;const b=$("connectionBadge");b.textContent=badge;b.className="pill"+(type?" "+type:"")}
+function setResult(text){$("resultStatus").textContent=text}
+function buildPrompt(){const idea=form.idea.value.trim();if(!idea)throw new Error("Describe your idea first.");const modeName={"video":"Text-to-video","image":"Text-to-image","image-to-video":"Image-to-video","video-restyle":"Reference video / restyle","ad-image":"Product advertisement image","ad-video":"Product advertisement video"}[form.mode.value];return idea+"\n\nWorkflow: "+modeName+".\nVisual direction: "+form.style.value+".\nCamera direction: "+form.camera.value+".\nAspect ratio: "+form.ratio.value+".\n"+(["image","ad-image"].includes(form.mode.value)?"Composition: clear subject, intentional framing and realistic detail.":"Video direction: coherent motion, stable subject identity, temporal continuity and intentional camera movement. Target duration: "+form.duration.value+" seconds.")+(form.avoid.value.trim()?"\nAvoid: "+form.avoid.value.trim()+".":"")}
+function modeChange(){const mode=form.mode.value;const isImage=["image","ad-image"].includes(mode);const isRefVideo=["image-to-video","video-restyle"].includes(mode);form.duration.disabled=isImage;form.audio.disabled=isImage;form.quality.disabled=!isImage;form.resolution.innerHTML=isImage?'<option value="2k">2K</option><option value="1k">1K</option><option value="4k">4K</option>':(isRefVideo?'<option value="1080p">1080p</option><option value="720p">720p</option><option value="480p">480p</option>':'<option value="720p">720p</option><option value="1080p">1080p</option><option value="480p">480p</option><option value="4k">4K</option>');form.resolution.value=isImage?"2k":(isRefVideo?"1080p":"720p");if(isImage&&form.ratio.value==="auto"){}else if(!isImage&&form.ratio.value==="auto")form.ratio.value="9:16"}
+form.mode.addEventListener("change",modeChange);modeChange();
+form.idea.addEventListener("input",()=>$("charCount").textContent=form.idea.value.length+" / 5000");
+form.apiBase.addEventListener("change",()=>{if(base())localStorage.setItem(baseKey,base())});
+form.reference.addEventListener("change",()=>{const wrap=$("referencePreview");wrap.replaceChildren();if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;const file=form.reference.files?.[0];if(!file)return;if(file.size>40*1024*1024){form.reference.value="";setResult("Reference must be under 40 MB.");return}if(["image","ad-image"].includes(form.mode.value)&&!file.type.startsWith("image/")){form.reference.value="";setResult("Image workflows require an image reference, not a video.");return}previewUrl=URL.createObjectURL(file);let el;if(file.type.startsWith("video/")){el=document.createElement("video");el.controls=true;el.muted=true}else{el=document.createElement("img");el.alt="Selected reference preview"}el.src=previewUrl;const meta=document.createElement("span");meta.className="small dim";meta.textContent=file.name+" · "+(file.size/1024/1024).toFixed(1)+" MB";wrap.append(el,meta);if(["image-to-video","video-restyle"].includes(form.mode.value))setResult(file.type.startsWith("video/")?"Video reference selected.":"Image reference selected.");});
+async function parseResponse(response){let data;try{data=await response.json()}catch{data={error:"The API returned a response that was not JSON."}}if(!response.ok)throw new Error(data.error||"The API request failed with status "+response.status);return data}
+async function checkConnection(){const b=base();if(!b){sayConnection("Enter the deployed CAP.AI API URL first.","Missing URL","bad");return}try{sayConnection("Checking API…","Checking");localStorage.setItem(baseKey,b);const r=await fetch(b+"/api/health",{headers:clientHeaders()});const d=await parseResponse(r);if(d.generationReady===false)sayConnection("Backend has a shared key but is missing its app access token configuration.","Needs setup","bad");else sayConnection("Gateway reachable. Credential mode: "+d.credentialMode+". Provider is "+d.provider+".","Connected","good")}catch(e){sayConnection(e.message||"Could not reach API. Check URL and CORS settings.","Offline","bad")}}
+$("checkConnection").addEventListener("click",checkConnection);
+async function uploadReference(file){const signResponse=await fetch(base()+"/api/uploads/signed-url",{method:"POST",headers:clientHeaders(),body:JSON.stringify({contentType:file.type})});const signed=await parseResponse(signResponse);const uploaded=await fetch(signed.uploadUrl,{method:"PUT",headers:signed.uploadHeaders||{},body:file,credentials:"omit"});if(!uploaded.ok)throw new Error("Reference upload failed. Check the provider's file-upload access.");return signed.publicUrl}
+function renderMedia(items){const output=$("output");output.replaceChildren();if(!items?.length){output.innerHTML="<div><strong>Job completed, but no media URL was returned.</strong><p class='small'>Check the provider request status and model response.</p></div>";return}const stack=document.createElement("div");stack.className="output-stack";items.forEach(item=>{const card=document.createElement("div");card.className="output-card";let media;if(item.type==="video"){media=document.createElement("video");media.controls=true;media.playsInline=true}else{media=document.createElement("img");media.alt="Generated image result";media.loading="lazy"}media.src=item.url;const action=document.createElement("div");action.className="row spread";action.style.marginTop="9px";const label=document.createElement("span");label.className="small dim";label.textContent=item.type==="video"?"Generated video":"Generated image";const link=document.createElement("a");link.className="button secondary small";link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open / download ↗";action.append(label,link);card.append(media,action);stack.append(card)});output.append(stack)}
+async function pollJob(jobId){activeJob=jobId;$("progress").hidden=false;$("generate").disabled=true;const deadline=Date.now()+15*60*1000;while(Date.now()<deadline){if(!activeJob)throw new Error("Polling stopped.");$("jobStatus").textContent="Waiting for the model to finish…";await new Promise(resolve=>{pollTimer=setTimeout(resolve,4000)});if(!activeJob)throw new Error("Polling stopped.");const response=await fetch(base()+"/api/jobs/"+encodeURIComponent(jobId),{headers:clientHeaders()});const data=await parseResponse(response);$("jobStatus").textContent="Provider status: "+data.status+".";if(data.status==="completed"){renderMedia(data.media||[]);setResult("Generation completed. Your result is returned from the model provider.");return}if(["failed","nsfw","canceled"].includes(data.status))throw new Error(data.error||"Generation "+data.status+".")}throw new Error("This page stopped waiting after 15 minutes. The provider job may still be processing; try checking again later.")}
+$("generate").addEventListener("click",async()=>{if(requestBusy)return;requestBusy=true;$("generate").disabled=true;try{if(!base())throw new Error("Enter the deployed CAP.AI API URL in the Connection panel.");localStorage.setItem(baseKey,base());let prompt=buildPrompt();const file=form.reference.files?.[0];const mode=form.mode.value;if(["image-to-video","video-restyle"].includes(mode)&&!file)throw new Error("Select a reference image or video for this workflow.");if(file&&["image","ad-image"].includes(mode)&&!file.type.startsWith("image/"))throw new Error("Image workflows require an image reference.");if(!form.hfKey.value.trim()&&!form.appToken.value)throw new Error("Enter your provider API key, or the private CAP.AI access token configured by the site owner.");if(form.avoid.value.trim())prompt+="\nPlease avoid these unwanted artifacts: "+form.avoid.value.trim()+".";
+$("output").innerHTML="<div><strong>Preparing your request…</strong><p class='small'>A reference may need to upload before generation.</p></div>";$("progress").hidden=false;$("jobStatus").textContent="Preparing request…";setResult("Generation submitted when the provider accepts the request.");
+let referenceUrls=[];let referenceKind="image";if(file){$("jobStatus").textContent="Uploading reference securely…";const url=await uploadReference(file);referenceUrls=[url];referenceKind=file.type.startsWith("video/")?"video":"image"}
+const payload={mode,prompt,aspectRatio:form.ratio.value,resolution:form.resolution.value,duration:Number(form.duration.value),quality:form.quality.value,generateAudio:form.audio.value==="true",referenceUrls,referenceKind};
+$("jobStatus").textContent="Submitting to model provider…";const response=await fetch(base()+"/api/generate",{method:"POST",headers:clientHeaders(),body:JSON.stringify(payload)});const data=await parseResponse(response);await pollJob(data.jobId);
+}catch(error){setResult(error.message||"Generation failed.");$("output").innerHTML="<div><strong>Could not complete generation</strong><p class='small'>"+escapeText(error.message||"Unknown error")+"</p></div>";}
+finally{activeJob=null;$("progress").hidden=true;$("generate").disabled=false;requestBusy=false;clearTimeout(pollTimer)}});
+$("cancel").addEventListener("click",async()=>{if(!activeJob)return;const id=activeJob;try{await fetch(base()+"/api/jobs/"+encodeURIComponent(id)+"/cancel",{method:"POST",headers:clientHeaders(),body:"{}"});activeJob=null;clearTimeout(pollTimer);setResult("Cancellation requested.")}catch(e){setResult("Could not cancel this job: "+e.message)}});
+$("buildPrompt").addEventListener("click",()=>{try{const prompt=buildPrompt();$("output").innerHTML="<div style='text-align:left;width:100%'><strong>Built prompt — not rendered</strong><pre id='promptText' style='white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;font:13px/1.6 ui-monospace,monospace;color:#d4d4d4'></pre><button class='button secondary small' id='copyBuilt' type='button'>Copy prompt</button></div>";$("promptText").textContent=prompt;document.getElementById("copyBuilt").onclick=async()=>{try{await navigator.clipboard.writeText(prompt);setResult("Prompt copied.")}catch{setResult("Select the prompt text and copy manually.")}};setResult("Prompt prepared. Click Generate media to render it.")}catch(e){setResult(e.message)}});
+function escapeText(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("reset").addEventListener("click",()=>{if(requestBusy){setResult("Wait for the current job or cancel it before resetting.");return}form.idea.value="";form.avoid.value="";form.reference.value="";$("referencePreview").replaceChildren();$("output").innerHTML="<div><strong>Your result will appear here</strong><p class='small'>Connect the API, write a brief and select Generate media.</p></div>";$("charCount").textContent="0 / 5000";setResult("New brief ready.")});
+})();
+</script>
+</body></html>
