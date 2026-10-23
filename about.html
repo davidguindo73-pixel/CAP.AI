@@ -6,13 +6,22 @@
 <meta name="theme-color" content="#050505"><title>About the Creator · CAP.AI</title>
 <link rel="icon" href="assets/cap-ai-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/site.css">
 <style>
-.creator-hero{position:relative;overflow:hidden;border:1px solid #303036;border-radius:26px;background:radial-gradient(ellipse at 90% 20%,#e5e7eb15,transparent 45%),linear-gradient(145deg,#151517,#09090a 65%)}
+.creator-hero{position:relative;overflow:hidden;border:1px solid #303036;border-radius:26px;background:radial-gradient(ellipse at 90% 20%,#e5e7eb15,transparent 45%),linear-gradient(145deg,#151517,#09090a 65%);padding:clamp(24px,5vw,60px)}
+.creator-layout{display:grid;grid-template-columns:minmax(220px,.78fr) minmax(0,1.5fr);gap:clamp(24px,5vw,70px);align-items:center}
+.creator-identity{display:flex;flex-direction:column;align-items:flex-start;gap:13px}
 .monogram{width:min(100%,300px);aspect-ratio:1;border-radius:34px;border:1px solid #52525b;background:linear-gradient(135deg,#3f3f46,#18181b 60%,#09090b);display:grid;place-items:center;box-shadow:0 25px 70px #0009,inset 0 1px 0 #ffffff14}
 .monogram span{font-size:clamp(75px,13vw,120px);line-height:1;letter-spacing:-.1em;font-weight:700;background:linear-gradient(135deg,#fff,#a1a1aa);background-clip:text;color:transparent}
-.creator-stat{border-top:1px solid #303036;padding-top:16px}
-.creator-stat strong{display:block;font-size:14px;color:#f4f4f5}
-.creator-stat span{display:block;color:#a1a1aa;font-size:12px;margin-top:4px}
-@media(max-width:700px){.monogram{width:200px;border-radius:25px}.creator-hero{padding:24px!important}}
+.creator-role{font-size:12px;text-transform:uppercase;letter-spacing:.20em;color:#a1a1aa}
+.creator-title{font-family:"Space Grotesk",Inter,sans-serif;font-size:clamp(35px,5.2vw,61px);font-weight:650;line-height:1.02;letter-spacing:-.055em;margin:14px 0 22px}
+.creator-lead{font-size:18px;line-height:1.65;color:#e4e4e7;margin:0 0 16px}
+.creator-copy{font-size:15px;line-height:1.85;color:#a1a1aa;margin:0 0 25px}
+.creator-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.creator-note{border-top:1px solid #303036;margin-top:30px;padding-top:18px;font-size:12px;color:#71717a}
+.value-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.value-card{border:1px solid #2c2c30;border-radius:18px;background:linear-gradient(145deg,#141416,#09090a);padding:24px}
+.value-card h2{font-size:22px;letter-spacing:-.035em;margin:10px 0}
+.value-card p{font-size:14px;color:#a1a1aa;margin:0}
+@media(max-width:700px){.creator-layout{grid-template-columns:1fr}.creator-identity{align-items:center;text-align:center}.monogram{width:200px;border-radius:25px}.value-grid{grid-template-columns:1fr}.creator-hero{padding:24px}}
 </style>
 </head>
 <body>
@@ -24,31 +33,34 @@
 <main class="shell">
 <section class="hero"><div class="kicker">About CAP.AI</div><h1>Creative tools should feel like a <span class="lime">studio, not a maze.</span></h1><p class="lead">CAP.AI is an early-stage creative technology project focused on making image, video, and advertising workflows clearer and more approachable.</p></section>
 <section class="section">
-<div class="creator-hero grid two" style="grid-template-columns:minmax(220px,.78fr) minmax(0,1.5fr);gap:clamp(24px,5vw,70px);align-items:center;padding:clamp(24px,5vw,60px)">
-<div class="flex flex-col items-center md:items-start">
-<div class="monogram"><span>DG</span></div>
-<div class="mt-5 text-xs uppercase tracking-[.22em] text-gray-400">Creator & Builder</div>
-<div class="text-sm text-gray-200 mt-2">Computer Engineering Student</div>
+<div class="creator-hero">
+<div class="creator-layout">
+<div class="creator-identity">
+<div class="monogram" role="img" aria-label="David Guindo initials"><span>DG</span></div>
+<div class="creator-role">Creator &amp; Builder</div>
+<span class="tag">Computer Engineering Student</span>
 </div>
 <div>
 <div class="kicker">The person behind the platform</div>
-<h2 class="font-display text-4xl md:text-6xl font-semibold leading-none tracking-[-.05em] mt-4 mb-6">David <span class="text-gray-400">Guindo.</span></h2>
-<p class="text-lg text-gray-200 leading-relaxed mb-5">I’m David Guindo, a computer engineering student interested in building technology that makes creative tools easier to use.</p>
-<p class="text-sm md:text-base text-gray-400 leading-relaxed mb-7">I started CAP.AI around a simple idea: turning an idea into a polished visual should feel approachable—not like you need a huge budget, complicated software, or years of production experience. I want to bring creative workflows together in one clear workspace for creators, students, and small businesses.</p>
-<div class="flex flex-wrap gap-3"><a class="button" href="create.html">Explore Create AI</a><a class="button secondary" href="contact.html">Send feedback</a></div>
+<h2 class="creator-title">David <span class="dim">Guindo.</span></h2>
+<p class="creator-lead">I’m David Guindo, a computer engineering student interested in building technology that makes creative tools easier to use.</p>
+<p class="creator-copy">I started CAP.AI around a simple idea: turning an idea into a polished visual should feel approachable—not like you need a huge budget, complicated software, or years of production experience. I want to bring creative workflows together in one clear workspace for creators, students, and small businesses.</p>
+<div class="creator-actions"><a class="button" href="create.html">Explore Create AI</a><a class="button secondary" href="contact.html">Send feedback</a></div>
+<div class="creator-note">Creator profile · CAP.AI · Early-stage creative technology project</div>
+</div>
 </div>
 </div>
 </section>
-<section class="section grid two">
-<article class="card"><div class="kicker">The mission</div><h2 class="text-2xl font-semibold mt-3 mb-3">Make creating feel accessible.</h2><p class="muted">The project is meant to reduce friction between having a creative idea and knowing how to communicate it to a media-generation tool.</p></article>
-<article class="card"><div class="kicker">The approach</div><h2 class="text-2xl font-semibold mt-3 mb-3">Build with clarity.</h2><p class="muted">CAP.AI brings prompts, visual direction, reference-guided workflows and advertising briefs into one place, with the intention of keeping complex tools easier to understand.</p></article>
+<section class="section value-grid">
+<article class="value-card"><div class="kicker">The mission</div><h2>Make creating feel accessible.</h2><p>The project is meant to reduce friction between having a creative idea and knowing how to communicate it to a media-generation tool.</p></article>
+<article class="value-card"><div class="kicker">The approach</div><h2>Build with clarity.</h2><p>CAP.AI brings prompts, visual direction, reference-guided workflows and advertising briefs into one place, with the intention of keeping complex tools easier to understand.</p></article>
 </section>
 <section class="section prose">
 <h2>What works today</h2>
 <p>The website includes a Prompt Lab, an examples gallery, and a Create AI interface with a prototype integration to a separate generation API. Actual rendering requires the backend to be deployed and connected to a provider account with access and credits.</p>
 <h2>What is still in progress</h2>
 <p>CAP.AI does not currently train or own its own foundation model. Secure user accounts, cloud project storage, billing, persistent job queues and production-grade moderation still need to be built before a broad public launch.</p>
-<div class="notice"><strong>Transparency matters.</strong> Some of the gallery items are reference images or illustrative concepts. They are not presented as media generated by CAP.AI.</div>
+<div class="notice"><strong>Transparency matters.</strong> Some gallery items are reference images or illustrative concepts. They are not presented as media generated by CAP.AI.</div>
 </section>
 </main>
 <footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="small dim">Created by David Guindo</span></div><div class="footer-links" style="margin-top:18px"><a href="create.html">Create AI</a><a href="examples.html">Examples</a><a href="about.html">About the creator</a><a href="press-kit.html">Press kit</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="ethics.html">Ethics</a><a href="contact.html">Feedback</a></div><p class="footer-note">CAP.AI generation requires a separately deployed API and provider credentials. Secure user accounts are not connected yet. © <span data-year></span> CAP.AI.</p></div></footer>
