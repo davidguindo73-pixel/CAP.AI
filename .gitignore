@@ -1,0 +1,11 @@
+# Never commit real credentials.
+api/.env
+api/.env.*
+!api/.env.example
+
+# Node artifacts and local logs.
+api/node_modules/
+api/npm-debug.log*
+api/yarn-error.log*
+npm-debug.log*
+.DS_Store
