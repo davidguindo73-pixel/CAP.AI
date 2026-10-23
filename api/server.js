@@ -119,8 +119,29 @@ function readInput(body) {
     throw error;
   }
   const refs = Array.isArray(body.referenceUrls) ? body.referenceUrls.slice(0, 5) : [];
+  const referenceKind = String(body.referenceKind || "image");
   if (refs.some((url) => typeof url !== "string" || !url.startsWith("https://"))) {
     const error = new Error("Reference URLs must be HTTPS URLs from a successful upload.");
+    error.status = 400;
+    throw error;
+  }
+  if (["image-to-video", "video-restyle"].includes(mode) && refs.length === 0) {
+    const error = new Error("This workflow requires a reference image or video.");
+    error.status = 400;
+    throw error;
+  }
+  if (mode === "image-to-video" && refs.length && referenceKind !== "image") {
+    const error = new Error("Image-to-video needs an image reference. Choose Reference Video / Restyle for a video file.");
+    error.status = 400;
+    throw error;
+  }
+  if (mode === "video-restyle" && refs.length && referenceKind !== "video") {
+    const error = new Error("Reference Video / Restyle needs a video reference.");
+    error.status = 400;
+    throw error;
+  }
+  if (["image", "ad-image"].includes(mode) && referenceKind === "video" && refs.length) {
+    const error = new Error("Image workflows accept image references only.");
     error.status = 400;
     throw error;
   }
@@ -132,7 +153,7 @@ function readInput(body) {
     ? (["480p", "720p", "1080p", "4k"].includes(body.resolution) ? body.resolution : "720p")
     : (["1k", "2k", "4k"].includes(body.resolution) ? body.resolution : "2k");
   const duration = Math.min(15, Math.max(4, Number.parseInt(body.duration, 10) || 5));
-  return { mode, prompt, refs, ratio, resolution, duration, isVideo };
+  return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind };
 }
 app.get("/api/health", (_req, res) => {
   res.json({
