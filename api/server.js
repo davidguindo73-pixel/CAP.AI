@@ -223,7 +223,9 @@ app.post("/api/generate", async (req, res, next) => {
         ...(input.refs.length ? (input.referenceKind === "video" ? { video_urls: input.refs } : { image_urls: input.refs }) : {})
       };
     } else if (input.videoModel === "kling") {
-      path = "/kling-video/v3.0/std/text-to-video";
+      // Route to the actual provider tier corresponding to the selected resolution option.
+      const klingTier = input.resolution === "4k" ? "4k" : (input.resolution === "1080p" ? "pro" : "std");
+      path = "/kling-video/v3.0/" + klingTier + "/text-to-video";
       payload = {
         prompt: input.prompt,
         duration: Math.min(15, Math.max(3, input.duration)),
