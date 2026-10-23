@@ -29,8 +29,10 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p _site
-          cp index.html studio.html examples.html account.html about.html blog.html changelog.html contact.html privacy.html terms.html safety.html ethics.html press-kit.html _site/
+          cp index.html create.html studio.html examples.html account.html about.html blog.html changelog.html contact.html privacy.html terms.html safety.html ethics.html press-kit.html _site/
           cp -R assets _site/assets
+          mkdir -p _site/api
+          cp api/README.md _site/api/README.md
           touch _site/.nojekyll
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
