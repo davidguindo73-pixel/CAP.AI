@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: cap-ai-generation-api
+    runtime: node
+    rootDir: api
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://davidguindo73-pixel.github.io,http://localhost:5500,http://127.0.0.1:5500
