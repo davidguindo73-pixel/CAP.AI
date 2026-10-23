@@ -168,7 +168,7 @@ app.get("/api/health", (_req, res) => {
     credentialMode: process.env.HF_API_KEY ? "server-key" : "bring-your-own-key",
     generationReady: !process.env.HF_API_KEY || Boolean(process.env.CAP_API_ACCESS_TOKEN),
     modes: ["image", "video", "image-to-video", "video-restyle", "ad-image", "ad-video"],
-    engines: ["marketing-studio/image", "bytedance/seedance-2.0/text-to-video", "kling-video/v3.0/std|pro|4k/text-to-video", "kling-video/v3.0-turbo/text-to-video", "kling-video/v3.0/std|pro|4k/image-to-video", "alibaba/wan-3.0/reference-to-video", "kling-video/o3/video-edit"],
+    engines: ["marketing-studio/image", "bytedance/seedance-2.0/text-to-video", "kling-video/v3.0/std/text-to-video", "kling-video/v3.0/pro/text-to-video", "kling-video/v3.0/4k/text-to-video", "kling-video/v3.0-turbo/text-to-video", "kling-video/v3.0/std/image-to-video", "kling-video/v3.0/pro/image-to-video", "kling-video/v3.0/4k/image-to-video", "alibaba/wan-3.0/reference-to-video", "kling-video/o3/video-edit"],
     note: "Provider account, model access and credits are required. This prototype does not include user accounts or billing."
   });
 });
