@@ -1,0 +1,1155 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cap AI — Make imagination look real.</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lime: #C6FF3D;
+    --lime-dim: #9FD12E;
+    --bg: #000000;
+    --bg-2: #0A0A0A;
+    --bg-3: #111111;
+    --border: #1c1c1c;
+  }
+  * { -webkit-font-smoothing: antialiased; }
+  html, body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.03em; }
+  .lime { color: var(--lime); }
+  .bg-lime { background-color: var(--lime); }
+  .border-lime { border-color: var(--lime); }
+  .text-dim { color: #8a8a8a; }
+  .text-mid { color: #b8b8b8; }
+
+  /* Grain / Noise */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* Glow cursor */
+  .cursor-glow {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(198,255,61,0.12) 0%, rgba(198,255,61,0) 60%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    transition: opacity .4s;
+    mix-blend-mode: screen;
+  }
+
+  /* Nav */
+  .nav-glass {
+    background: rgba(10,10,10,0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Hero orb */
+  .hero-orb {
+    position: absolute;
+    width: 900px; height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(198,255,61,0.35), rgba(198,255,61,0.05) 40%, rgba(0,0,0,0) 70%);
+    filter: blur(60px);
+    top: -30%;
+    right: -20%;
+    animation: float 14s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .hero-orb-2 {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(198,255,61,0.18), rgba(0,0,0,0) 70%);
+    filter: blur(80px);
+    bottom: -200px;
+    left: -150px;
+    animation: float 18s ease-in-out infinite reverse;
+    pointer-events: none;
+  }
+  @keyframes float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(-40px,30px) scale(1.08); }
+  }
+
+  /* Grid background */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  /* Buttons */
+  .btn-lime {
+    background: var(--lime);
+    color: #000;
+    font-weight: 600;
+    padding: 14px 26px;
+    border-radius: 999px;
+    transition: all .3s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 0 0 0 rgba(198,255,61,0);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-lime:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -10px rgba(198,255,61,0.6), 0 0 0 4px rgba(198,255,61,0.15);
+  }
+  .btn-ghost {
+    border: 1px solid #2a2a2a;
+    padding: 14px 26px;
+    border-radius: 999px;
+    transition: all .3s;
+    color: #fff;
+  }
+  .btn-ghost:hover { border-color: var(--lime); color: var(--lime); }
+
+  /* Cards */
+  .feature-card {
+    background: linear-gradient(180deg, #0e0e0e 0%, #080808 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    transition: all .4s cubic-bezier(.2,.8,.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(400px circle at var(--mx,50%) var(--my,0%), rgba(198,255,61,0.12), transparent 40%);
+    opacity: 0;
+    transition: opacity .4s;
+    pointer-events: none;
+  }
+  .feature-card:hover { border-color: #333; transform: translateY(-4px); }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(198,255,61,0.08);
+    border: 1px solid rgba(198,255,61,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--lime);
+    margin-bottom: 20px;
+  }
+
+  /* Showcase tiles (simulated AI output) */
+  .tile {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    aspect-ratio: 3/4;
+    transition: transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .tile:hover { transform: scale(1.02); }
+  .tile-1 { background:
+    radial-gradient(ellipse at 50% 30%, #2a1f14 0%, #0d0906 60%, #000 100%),
+    linear-gradient(180deg, #1a1308, #000);
+    background-blend-mode: screen;
+  }
+  .tile-2 { background:
+    radial-gradient(ellipse at 30% 40%, #3a2e1a 0%, #0f0a05 60%, #000 100%),
+    linear-gradient(135deg, #1f140a, #000);
+    background-blend-mode: screen;
+  }
+  .tile-3 { background:
+    radial-gradient(ellipse at 60% 30%, #1a2f2a 0%, #050d0b 60%, #000 100%),
+    linear-gradient(180deg, #0a1f1a, #000);
+    background-blend-mode: screen;
+  }
+  .tile-4 { background:
+    radial-gradient(ellipse at 40% 50%, #2f1a2a 0%, #0d050a 60%, #000 100%),
+    linear-gradient(180deg, #1a0a14, #000);
+    background-blend-mode: screen;
+  }
+  .tile-5 { background:
+    radial-gradient(ellipse at 50% 50%, #1f2a3a 0%, #050a0f 60%, #000 100%),
+    linear-gradient(180deg, #0a1420, #000);
+    background-blend-mode: screen;
+  }
+  .tile-6 { background:
+    radial-gradient(ellipse at 70% 20%, #2a2a1a 0%, #0a0a05 60%, #000 100%),
+    linear-gradient(180deg, #14140a, #000);
+    background-blend-mode: screen;
+  }
+  .tile-7 { background:
+    radial-gradient(ellipse at 30% 70%, #3a1f2a 0%, #0f050a 60%, #000 100%),
+    linear-gradient(180deg, #1f0a14, #000);
+    background-blend-mode: screen;
+  }
+  .tile-8 { background:
+    radial-gradient(ellipse at 50% 40%, #1a3a2a 0%, #050f0a 60%, #000 100%),
+    linear-gradient(180deg, #0a1f14, #000);
+    background-blend-mode: screen;
+  }
+  .tile::after {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.25), transparent 50%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.18), transparent 50%),
+      radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,0.15), transparent 50%),
+      radial-gradient(1px 1px at 85% 20%, rgba(198,255,61,0.4), transparent 50%);
+    pointer-events: none;
+  }
+  .tile-label {
+    position: absolute; bottom: 16px; left: 16px; right: 16px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tile-tag {
+    position: absolute; top: 14px; left: 14px;
+    background: rgba(198,255,61,0.9);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Marquee */
+  .marquee {
+    display: flex;
+    gap: 16px;
+    animation: marquee 45s linear infinite;
+  }
+  .marquee:hover { animation-play-state: paused; }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .marquee .tile { flex: 0 0 280px; aspect-ratio: 3/4; }
+
+  /* Tabs */
+  .tab-btn {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #0a0a0a;
+    color: #b8b8b8;
+    font-size: 14px;
+    transition: all .3s;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    background: var(--lime);
+    color: #000;
+    border-color: var(--lime);
+    font-weight: 600;
+  }
+  .tab-btn:not(.active):hover { border-color: #444; color: #fff; }
+
+  /* Stat card */
+  .stat {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    background: #080808;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lime), transparent);
+    opacity: 0.6;
+  }
+
+  /* Pricing */
+  .price-card {
+    background: linear-gradient(180deg, #0d0d0d, #060606);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    transition: all .4s;
+  }
+  .price-card.featured {
+    border-color: var(--lime);
+    position: relative;
+    background:
+      radial-gradient(circle at top, rgba(198,255,61,0.08), transparent 60%),
+      linear-gradient(180deg, #0d0d0d, #060606);
+  }
+  .price-card:hover { transform: translateY(-6px); }
+
+  /* Process step */
+  .step {
+    position: relative;
+    padding: 32px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #080808;
+  }
+  .step-num {
+    font-family: 'Space Grotesk';
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--lime);
+    line-height: 1;
+    opacity: 0.18;
+    position: absolute;
+    top: 16px; right: 24px;
+  }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(30px); transition: all .9s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* Prompt mockup */
+  .prompt-mock {
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 14px;
+    color: #d0d0d0;
+    position: relative;
+  }
+  .prompt-mock::before {
+    content: "PROMPT";
+    position: absolute;
+    top: -9px; left: 16px;
+    background: var(--lime);
+    color: #000;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .cursor-blink {
+    display: inline-block;
+    width: 2px; height: 1em;
+    background: var(--lime);
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+  /* Logo mark */
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--lime);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--lime);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 12px var(--lime); }
+    50% { box-shadow: 0 0 24px var(--lime), 0 0 6px var(--lime); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: #1c1c1c; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a2a2a; }
+
+  /* Mobile menu */
+  @media (max-width: 768px) {
+    .hero-orb { width: 500px; height: 500px; right: -40%; }
+    .mobile-nav-hide { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
+<nav class="fixed top-0 left-0 right-0 z-50 nav-glass">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2">
+      <div class="logo-dot"></div>
+      <span class="font-display text-xl font-semibold tracking-tight">Cap<span class="lime">.</span>AI</span>
+    </a>
+    <div class="mobile-nav-hide hidden md:flex items-center gap-8 text-sm text-mid">
+      <a href="#features" class="hover:text-white transition">Features</a>
+      <a href="#showcase" class="hover:text-white transition">Showcase</a>
+      <a href="#studio" class="hover:text-white transition">Studio</a>
+      <a href="#pricing" class="hover:text-white transition">Pricing</a>
+      <a href="#faq" class="hover:text-white transition">FAQ</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="#" class="text-sm text-mid hover:text-white transition hidden sm:block">Sign in</a>
+      <a href="#pricing" class="btn-lime text-sm !py-2.5 !px-5">Launch Studio</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="relative pt-36 pb-24 md:pt-44 md:pb-32 overflow-hidden">
+  <div class="hero-orb"></div>
+  <div class="hero-orb-2"></div>
+  <div class="absolute inset-0 grid-bg"></div>
+
+  <div class="relative max-w-7xl mx-auto px-6 z-10">
+    <div class="inline-flex items-center gap-2 border border-[#222] rounded-full px-4 py-1.5 mb-8 text-xs text-mid">
+      <span class="w-1.5 h-1.5 rounded-full bg-lime animate-pulse"></span>
+      Now generating at 4K • Cinematic motion model v4.2
+    </div>
+
+    <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-semibold leading-[0.95] tracking-tight mb-8 max-w-5xl">
+      Make imagination
+      <br />
+      <span class="relative inline-block">
+        <span class="lime">look real.</span>
+        <svg class="absolute -bottom-2 left-0 w-full" height="12" viewBox="0 0 300 12" fill="none">
+          <path d="M2 8 Q 75 2, 150 6 T 298 4" stroke="#C6FF3D" stroke-width="3" stroke-linecap="round" fill="none"/>
+        </svg>
+      </span>
+    </h1>
+
+    <p class="text-lg md:text-xl text-mid max-w-2xl mb-10 leading-relaxed">
+      Cap AI is the all-in-one creative studio where text, photos, and raw ideas become photoreal images and cinematic video — with flawless faces, believable motion, and lighting that feels lived-in.
+    </p>
+
+    <div class="flex flex-wrap gap-4 mb-16">
+      <a href="#studio" class="btn-lime inline-flex items-center gap-2">
+        Start creating free
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#showcase" class="btn-ghost inline-flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Watch demo reel
+      </a>
+    </div>
+
+    <!-- Prompt mockup + preview tiles -->
+    <div class="grid lg:grid-cols-5 gap-6 items-stretch">
+      <div class="lg:col-span-2 space-y-4">
+        <div class="prompt-mock">
+          <span class="text-mid">/imagine</span> a fashion editorial at midnight in Tokyo, neon rain, 35mm grain, shallow depth, <span class="lime">model wearing oversized leather jacket</span>...<span class="cursor-blink"></span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-[10px] uppercase tracking-wider text-dim">
+          <div class="border border-[#1c1c1c] rounded-lg p-2 text-center">Style<br><span class="text-white">Cinematic</span></div>
+          <div class="border border-[#1c1c1c] rounded-lg p-2 text-center">Motion<br><span class="text-white">Dolly-in</span></div>
+          <div class="border border-[#1c1c1c] rounded-lg p-2 text-center">Lens<br><span class="text-white">35mm</span></div>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-dim pt-2">
+          <div class="flex -space-x-2">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-[#C6FF3D] to-[#7aa800] border-2 border-black"></div>
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-[#ff9f6f] to-[#b54500] border-2 border-black"></div>
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-[#9d7aff] to-[#4500b5] border-2 border-black"></div>
+          </div>
+          <span><span class="text-white">2,847</span> creators rendering now</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 grid grid-cols-3 gap-3">
+        <div class="tile tile-1">
+          <div class="tile-tag">Text → Image</div>
+          <div class="absolute inset-0 flex items-end p-4">
+            <div class="w-20 h-28 rounded-full bg-gradient-to-b from-[#d4a878] via-[#8b6040] to-[#3a2514] opacity-90 blur-[1px] mx-auto mb-8 relative">
+              <div class="absolute top-8 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-b from-[#e0b890] to-[#a07850]"></div>
+            </div>
+          </div>
+          <div class="tile-label"><span>Portrait · 4K</span><span class="lime">● 00:12</span></div>
+        </div>
+        <div class="tile tile-2 row-span-2">
+          <div class="tile-tag">Image → Video</div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#C6FF3D"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+          <div class="tile-label"><span>Cinematic · 6s</span><span class="lime">● LIVE</span></div>
+        </div>
+        <div class="tile tile-3">
+          <div class="tile-tag">AI Clone</div>
+          <div class="tile-label"><span>Identity Lock</span><span class="lime">● 00:08</span></div>
+        </div>
+        <div class="tile tile-4">
+          <div class="tile-tag">V2V Style</div>
+          <div class="tile-label"><span>Noir film</span><span class="lime">● 00:22</span></div>
+        </div>
+        <div class="tile tile-5">
+          <div class="tile-tag">Photo Edit</div>
+          <div class="tile-label"><span>Relight</span><span class="lime">● 00:04</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trust bar -->
+    <div class="mt-20 pt-10 border-t border-[#1a1a1a] grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+      <div>
+        <div class="font-display text-3xl font-semibold lime">4.9<span class="text-white text-xl">★</span></div>
+        <div class="text-xs text-dim mt-1 uppercase tracking-wider">Creator rating</div>
+      </div>
+      <div>
+        <div class="font-display text-3xl font-semibold">2.4M+</div>
+        <div class="text-xs text-dim mt-1 uppercase tracking-wider">Scenes rendered</div>
+      </div>
+      <div>
+        <div class="font-display text-3xl font-semibold">98%</div>
+        <div class="text-xs text-dim mt-1 uppercase tracking-wider">Facial fidelity</div>
+      </div>
+      <div>
+        <div class="font-display text-3xl font-semibold">60fps</div>
+        <div class="text-xs text-dim mt-1 uppercase tracking-wider">Motion smooth</div>
+      </div>
+      <div class="col-span-2 md:col-span-1">
+        <div class="font-display text-3xl font-semibold">~$0.04</div>
+        <div class="text-xs text-dim mt-1 uppercase tracking-wider">Per render</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE SHOWCASE -->
+<section class="py-16 border-y border-[#141414] bg-[#050505]">
+  <div class="overflow-hidden">
+    <div class="marquee">
+      <!-- 16 tiles, duplicated for seamless loop -->
+      <div class="tile tile-1"><div class="tile-tag">Portrait</div><div class="tile-label"><span>Studio light</span><span class="lime">●</span></div></div>
+      <div class="tile tile-2"><div class="tile-tag">Fashion</div><div class="tile-label"><span>Editorial</span><span class="lime">●</span></div></div>
+      <div class="tile tile-3"><div class="tile-tag">Paparazzi</div><div class="tile-label"><span>Night shots</span><span class="lime">●</span></div></div>
+      <div class="tile tile-4"><div class="tile-tag">Short film</div><div class="tile-label"><span>Cinematic</span><span class="lime">●</span></div></div>
+      <div class="tile tile-5"><div class="tile-tag">Clone</div><div class="tile-label"><span>Identity lock</span><span class="lime">●</span></div></div>
+      <div class="tile tile-6"><div class="tile-tag">VFX</div><div class="tile-label"><span>Particle FX</span><span class="lime">●</span></div></div>
+      <div class="tile tile-7"><div class="tile-tag">Wardrobe</div><div class="tile-label"><span>Outfit swap</span><span class="lime">●</span></div></div>
+      <div class="tile tile-8"><div class="tile-tag">Camera</div><div class="tile-label"><span>Dolly zoom</span><span class="lime">●</span></div></div>
+      <!-- dup -->
+      <div class="tile tile-3"><div class="tile-tag">Paparazzi</div><div class="tile-label"><span>Night shots</span><span class="lime">●</span></div></div>
+      <div class="tile tile-5"><div class="tile-tag">Clone</div><div class="tile-label"><span>Identity lock</span><span class="lime">●</span></div></div>
+      <div class="tile tile-1"><div class="tile-tag">Portrait</div><div class="tile-label"><span>Studio light</span><span class="lime">●</span></div></div>
+      <div class="tile tile-7"><div class="tile-tag">Wardrobe</div><div class="tile-label"><span>Outfit swap</span><span class="lime">●</span></div></div>
+      <div class="tile tile-2"><div class="tile-tag">Fashion</div><div class="tile-label"><span>Editorial</span><span class="lime">●</span></div></div>
+      <div class="tile tile-4"><div class="tile-tag">Short film</div><div class="tile-label"><span>Cinematic</span><span class="lime">●</span></div></div>
+      <div class="tile tile-8"><div class="tile-tag">Camera</div><div class="tile-label"><span>Dolly zoom</span><span class="lime">●</span></div></div>
+      <div class="tile tile-6"><div class="tile-tag">VFX</div><div class="tile-label"><span>Particle FX</span><span class="lime">●</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="py-24 md:py-32 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-16 gap-6 reveal">
+      <div>
+        <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Studio capabilities</div>
+        <h2 class="font-display text-4xl md:text-6xl font-semibold leading-tight max-w-2xl">
+          One platform.<br />
+          <span class="text-mid">Every kind of creative output.</span>
+        </h2>
+      </div>
+      <p class="text-mid max-w-md">From a single sentence to a full cinematic scene — Cap AI covers the entire creative stack, tuned for realism that rivals production studios.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 reveal">
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Text → Image</h3>
+        <p class="text-sm text-mid leading-relaxed">Photoreal images from plain English. Ultra-accurate skin texture, fabric physics, and believable lighting across any genre.</p>
+      </div>
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Text → Video</h3>
+        <p class="text-sm text-mid leading-relaxed">Cinematic clips with coherent motion, stable faces, and camera moves that feel directed — not generated.</p>
+      </div>
+      <!-- Feature 3 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Image → Video</h3>
+        <p class="text-sm text-mid leading-relaxed">Bring any still to life. Animate portraits, scenes, and products with motion that honors the original composition.</p>
+      </div>
+      <!-- Feature 4 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">AI Clones</h3>
+        <p class="text-sm text-mid leading-relaxed">Lock a face, a voice, a persona. Generate consistent characters across hundreds of frames without drift.</p>
+      </div>
+      <!-- Feature 5 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Smart Photo Edit</h3>
+        <p class="text-sm text-mid leading-relaxed">Swap outfits, relight scenes, extend backgrounds. Surgical edits that respect the original photo's physics.</p>
+      </div>
+      <!-- Feature 6 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Video → Video</h3>
+        <p class="text-sm text-mid leading-relaxed">Restyle footage into anime, noir, 16mm film, or cyberpunk while keeping motion perfectly intact.</p>
+      </div>
+      <!-- Feature 7 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Cinematic Camera</h3>
+        <p class="text-sm text-mid leading-relaxed">Dolly, crane, rack focus, steadicam. Describe the shot and the AI directs it like a DP.</p>
+      </div>
+      <!-- Feature 8 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-semibold mb-2">Pro VFX</h3>
+        <p class="text-sm text-mid leading-relaxed">Particles, volumetric light, lens flares, fire, rain. Effects that integrate with real-world footage physics.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE TABS -->
+<section id="showcase" class="py-24 md:py-32 bg-[#050505] border-y border-[#141414]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-12 reveal">
+      <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— The reel</div>
+      <h2 class="font-display text-4xl md:text-6xl font-semibold mb-6">See what's possible.</h2>
+      <p class="text-mid max-w-2xl mx-auto">Real prompts. Real outputs. Every frame generated inside Cap AI — no post, no tricks.</p>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-2 mb-12 reveal" id="tabBar">
+      <button class="tab-btn active" data-tab="portrait">Lifelike Portraits</button>
+      <button class="tab-btn" data-tab="fashion">Fashion Editorial</button>
+      <button class="tab-btn" data-tab="paparazzi">Nighttime Paparazzi</button>
+      <button class="tab-btn" data-tab="film">Cinematic Short</button>
+      <button class="tab-btn" data-tab="wardrobe">Wardrobe Swap</button>
+    </div>
+
+    <div id="showcaseGrid" class="grid md:grid-cols-3 gap-5 reveal">
+      <!-- dynamically filled -->
+    </div>
+
+    <div id="promptLine" class="mt-10 max-w-3xl mx-auto prompt-mock text-center reveal">
+      <span class="text-mid">/imagine</span> <span id="promptText">studio portrait of a woman, golden hour window light, 85mm f/1.4, subtle freckles, soft skin texture, Kodak Portra 400 tones</span><span class="cursor-blink"></span>
+    </div>
+  </div>
+</section>
+
+<!-- REALISM METRICS -->
+<section class="py-24 md:py-32 relative">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+      <div class="reveal">
+        <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Built for realism</div>
+        <h2 class="font-display text-4xl md:text-5xl font-semibold leading-tight mb-6">
+          The details that make it <span class="lime">feel</span> real.
+        </h2>
+        <p class="text-mid mb-8 leading-relaxed">Other models hallucinate fingers, warp faces mid-motion, or collapse lighting between frames. Cap AI was trained from the ground up on cinematography, anatomy, and physics — so every pixel earns its place.</p>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-[#0f0f0f] border border-[#1c1c1c] flex items-center justify-center lime">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="font-semibold">Anatomy-aware rendering</div>
+              <div class="text-sm text-dim">Hands, faces, and hair stay coherent at any angle.</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-[#0f0f0f] border border-[#1c1c1c] flex items-center justify-center lime">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="font-semibold">Physics-grade motion</div>
+              <div class="text-sm text-dim">Cloth, hair, and light move like they should — frame after frame.</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-[#0f0f0f] border border-[#1c1c1c] flex items-center justify-center lime">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="font-semibold">Identity persistence</div>
+              <div class="text-sm text-dim">Same character. Same scene. No drifting features between shots.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 reveal">
+        <div class="stat">
+          <div class="font-display text-5xl font-semibold lime" data-count="98">0</div>
+          <div class="text-sm text-mid mt-2">Facial fidelity score</div>
+          <div class="text-xs text-dim mt-1">vs. industry avg. 71</div>
+        </div>
+        <div class="stat">
+          <div class="font-display text-5xl font-semibold" data-count="120">0</div>
+          <div class="text-sm text-mid mt-2">FPS motion smoothness</div>
+          <div class="text-xs text-dim mt-1">Buttery, not janky</div>
+        </div>
+        <div class="stat">
+          <div class="font-display text-5xl font-semibold" data-count="4">0</div>
+          <div class="text-sm text-mid mt-2">K native resolution</div>
+          <div class="text-xs text-dim mt-1">No upscaling artifacts</div>
+        </div>
+        <div class="stat">
+          <div class="font-display text-5xl font-semibold lime" data-count="9" data-suffix="s">0</div>
+          <div class="text-sm text-mid mt-2">Avg. render time</div>
+          <div class="text-xs text-dim mt-1">For a 6s cinematic clip</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="studio" class="py-24 md:py-32 bg-[#050505] border-y border-[#141414]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Workflow</div>
+      <h2 class="font-display text-4xl md:text-6xl font-semibold">From thought to screen in three moves.</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><circle cx="6" cy="6" r="2"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-semibold mb-3">Describe it</h3>
+        <p class="text-mid text-sm leading-relaxed">Type a prompt, upload a reference, or speak it out loud. Cap AI understands nuance — lighting, lens, mood, era.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-semibold mb-3">Direct it</h3>
+        <p class="text-sm text-mid leading-relaxed">Dial in camera moves, aspect ratio, film stock, motion strength. Preview variations side-by-side in real time.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-semibold mb-3">Ship it</h3>
+        <p class="text-sm text-mid leading-relaxed">Export 4K images or cinematic video. One-click to Reels, Shorts, TikTok, or raw ProRes for your NLE.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="py-24 md:py-32">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Pricing</div>
+      <h2 class="font-display text-4xl md:text-6xl font-semibold mb-6">Create without ceilings.</h2>
+      <p class="text-mid max-w-2xl mx-auto">Start free. Upgrade when you're ready. Every plan capped at <span class="lime font-semibold">$19.99/mo</span> — because creativity shouldn't need a CFO.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 reveal">
+      <!-- Free -->
+      <div class="price-card">
+        <div class="text-sm text-dim uppercase tracking-wider mb-2">Starter</div>
+        <div class="flex items-baseline gap-2 mb-2">
+          <span class="font-display text-5xl font-semibold">$0</span>
+          <span class="text-mid">/forever</span>
+        </div>
+        <p class="text-sm text-mid mb-8">Everything you need to explore.</p>
+        <ul class="space-y-3 text-sm mb-10">
+          <li class="flex items-center gap-3"><span class="lime">✓</span> 40 renders / month</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Text → Image & Video</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> 720p exports</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Community gallery</li>
+          <li class="flex items-center gap-3 text-dim"><span>—</span> AI Clones</li>
+        </ul>
+        <a href="#" class="btn-ghost block text-center w-full">Start free</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="price-card featured">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-lime text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most popular</div>
+        <div class="text-sm lime uppercase tracking-wider mb-2">Creator Pro</div>
+        <div class="flex items-baseline gap-2 mb-2">
+          <span class="font-display text-5xl font-semibold">$9.99</span>
+          <span class="text-mid">/month</span>
+        </div>
+        <p class="text-sm text-mid mb-8">For creators who ship daily.</p>
+        <ul class="space-y-3 text-sm mb-10">
+          <li class="flex items-center gap-3"><span class="lime">✓</span> 400 renders / month</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> All studio tools</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> 4K exports, 60fps</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> 5 AI Clones</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Priority render queue</li>
+        </ul>
+        <a href="#" class="btn-lime block text-center w-full">Go Pro</a>
+      </div>
+
+      <!-- Studio -->
+      <div class="price-card">
+        <div class="text-sm text-dim uppercase tracking-wider mb-2">Studio</div>
+        <div class="flex items-baseline gap-2 mb-2">
+          <span class="font-display text-5xl font-semibold">$19.99</span>
+          <span class="text-mid">/month</span>
+        </div>
+        <p class="text-sm text-mid mb-8">The ceiling. No upsells, ever.</p>
+        <ul class="space-y-3 text-sm mb-10">
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Unlimited renders</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> ProRes & RAW exports</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Unlimited AI Clones</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Team seats (up to 5)</li>
+          <li class="flex items-center gap-3"><span class="lime">✓</span> Commercial license</li>
+        </ul>
+        <a href="#" class="btn-ghost block text-center w-full">Go Studio</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="py-24 md:py-32 bg-[#050505] border-y border-[#141414]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Voices</div>
+      <h2 class="font-display text-4xl md:text-5xl font-semibold">Loved by the people who ship.</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 reveal">
+      <div class="p-8 border border-[#1c1c1c] rounded-2xl bg-[#0a0a0a]">
+        <div class="lime text-2xl mb-4">"</div>
+        <p class="text-mid leading-relaxed mb-6">I replaced three tools with Cap AI. The facial consistency across my short film shots is something I've never seen outside of a render farm.</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#C6FF3D] to-[#4a6600]"></div>
+          <div>
+            <div class="font-semibold text-sm">Mira Okafor</div>
+            <div class="text-xs text-dim">Independent filmmaker</div>
+          </div>
+        </div>
+      </div>
+      <div class="p-8 border border-[#1c1c1c] rounded-2xl bg-[#0a0a0a]">
+        <div class="lime text-2xl mb-4">"</div>
+        <p class="text-mid leading-relaxed mb-6">My paparazzi-style shoots for clients used to cost $12k. Now I deliver a full set in an afternoon. The night-lighting is genuinely spooky-good.</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#ff9f6f] to-[#7a3500]"></div>
+          <div>
+            <div class="font-semibold text-sm">Daniel Reyes</div>
+            <div class="text-xs text-dim">Fashion photographer</div>
+          </div>
+        </div>
+      </div>
+      <div class="p-8 border border-[#1c1c1c] rounded-2xl bg-[#0a0a0a]">
+        <div class="lime text-2xl mb-4">"</div>
+        <p class="text-mid leading-relaxed mb-6">Finally an AI that understands fabric. My outfit transformations look like they were shot in Milan, not generated on a laptop.</p>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#9d7aff] to-[#2a007a]"></div>
+          <div>
+            <div class="font-semibold text-sm">Priya Shah</div>
+            <div class="text-xs text-dim">Content creator, 2.1M followers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-24 md:py-32">
+  <div class="max-w-4xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs uppercase tracking-[0.3em] lime mb-4">— Questions</div>
+      <h2 class="font-display text-4xl md:text-5xl font-semibold">Everything you're wondering.</h2>
+    </div>
+
+    <div class="space-y-3 reveal" id="faqList">
+      <details class="group border border-[#1c1c1c] rounded-xl bg-[#0a0a0a] overflow-hidden">
+        <summary class="cursor-pointer p-6 flex items-center justify-between font-semibold">
+          Do I own what I create?
+          <span class="lime text-2xl transition group-open:rotate-45">+</span>
+        </summary>
+        <div class="px-6 pb-6 text-mid text-sm leading-relaxed">Yes. Every Pro and Studio subscriber receives a full commercial license for their outputs. Starter plan creations are licensed for personal use.</div>
+      </details>
+      <details class="group border border-[#1c1c1c] rounded-xl bg-[#0a0a0a] overflow-hidden">
+        <summary class="cursor-pointer p-6 flex items-center justify-between font-semibold">
+          Is there really no plan over $19.99?
+          <span class="lime text-2xl transition group-open:rotate-45">+</span>
+        </summary>
+        <div class="px-6 pb-6 text-mid text-sm leading-relaxed">Correct. Our Studio plan is the ceiling. We believe creative tools should be accessible — so we built a pricing model that doesn't punish you for creating more.</div>
+      </details>
+      <details class="group border border-[#1c1c1c] rounded-xl bg-[#0a0a0a] overflow-hidden">
+        <summary class="cursor-pointer p-6 flex items-center justify-between font-semibold">
+          How do AI Clones keep identity consistent?
+          <span class="lime text-2xl transition group-open:rotate-45">+</span>
+        </summary>
+        <div class="px-6 pb-6 text-mid text-sm leading-relaxed">Our identity model learns a person's geometry, micro-expressions, and lighting response from as few as 5 reference photos. Every subsequent generation locks onto that embedding so faces don't drift between scenes or frames.</div>
+      </details>
+      <details class="group border border-[#1c1c1c] rounded-xl bg-[#0a0a0a] overflow-hidden">
+        <summary class="cursor-pointer p-6 flex items-center justify-between font-semibold">
+          Can I use my own reference images and videos?
+          <span class="lime text-2xl transition group-open:rotate-45">+</span>
+        </summary>
+        <div class="px-6 pb-6 text-mid text-sm leading-relaxed">Absolutely. Upload anything — product photos, mood boards, footage — and use it as a style, subject, or motion reference across any of our tools.</div>
+      </details>
+      <details class="group border border-[#1c1c1c] rounded-xl bg-[#0a0a0a] overflow-hidden">
+        <summary class="cursor-pointer p-6 flex items-center justify-between font-semibold">
+          What output formats are supported?
+          <span class="lime text-2xl transition group-open:rotate-45">+</span>
+        </summary>
+        <div class="px-6 pb-6 text-mid text-sm leading-relaxed">Images export as PNG, JPG, or WEBP up to 4K. Video exports include MP4 (H.264/H.265), ProRes 422 HQ, and transparent WEBM for VFX workflows.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-24 md:py-32 relative overflow-hidden">
+  <div class="absolute inset-0 grid-bg"></div>
+  <div class="hero-orb" style="top:-200px; right:-100px; width:700px; height:700px;"></div>
+
+  <div class="relative max-w-5xl mx-auto px-6 text-center z-10 reveal">
+    <h2 class="font-display text-5xl md:text-7xl font-semibold leading-[0.95] mb-8">
+      Your next scene is<br />
+      <span class="lime">one prompt away.</span>
+    </h2>
+    <p class="text-lg text-mid max-w-2xl mx-auto mb-10">Join 200,000+ creators turning ideas into reality. Free to start. Nothing to install.</p>
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="#" class="btn-lime inline-flex items-center gap-2">
+        Launch the Studio
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#showcase" class="btn-ghost">See the reel</a>
+    </div>
+
+    <div class="mt-12 inline-flex items-center gap-6 text-xs text-dim">
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span> No credit card</span>
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span> Cancel anytime</span>
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-lime"></span> SOC 2 compliant</span>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t border-[#141414] py-16 bg-[#050505]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid md:grid-cols-5 gap-10 mb-12">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="logo-dot"></div>
+          <span class="font-display text-xl font-semibold">Cap<span class="lime">.</span>AI</span>
+        </div>
+        <p class="text-sm text-mid max-w-sm mb-6">Make imagination look real. The all-in-one AI creative studio for the next generation of storytellers.</p>
+        <div class="flex gap-3">
+          <a href="#" class="w-9 h-9 rounded-full border border-[#1c1c1c] flex items-center justify-center hover:border-lime hover:text-lime transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-full border border-[#1c1c1c] flex items-center justify-center hover:border-lime hover:text-lime transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-full border border-[#1c1c1c] flex items-center justify-center hover:border-lime hover:text-lime transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.6 6.3a4.2 4.2 0 0 0-3-3C14.8 2.8 12 2.8 12 2.8s-2.8 0-4.6.5a4.2 4.2 0 0 0-3 3C3.9 8.1 3.9 12 3.9 12s0 3.9.5 5.7a4.2 4.2 0 0 0 3 3c1.8.5 4.6.5 4.6.5s2.8 0 4.6-.5a4.2 4.2 0 0 0 3-3c.5-1.8.5-5.7.5-5.7s0-3.9-.5-5.7zM10 15.5v-7l6 3.5-6 3.5z"/></svg>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-full border border-[#1c1c1c] flex items-center justify-center hover:border-lime hover:text-lime transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4a19.8 19.8 0 0 0-4.9-1.3l-.2.3a16 16 0 0 0-6.4 0l-.2-.3a19.7 19.7 0 0 0-5 1.3C.6 8.7-.3 12.9.2 17a20 20 0 0 0 6 3c.5-.7.9-1.4 1.3-2.2-.7-.3-1.4-.6-2-1l.5-.4a14.2 14.2 0 0 0 12 0l.5.4c-.7.4-1.3.7-2 1 .4.8.8 1.5 1.3 2.2a20 20 0 0 0 6-3c.6-4.9-.9-9-3.5-12.6zM8 14.6c-1.2 0-2.2-1.1-2.2-2.5s1-2.5 2.2-2.5 2.2 1.1 2.2 2.5-1 2.5-2.2 2.5zm8 0c-1.2 0-2.2-1.1-2.2-2.5s1-2.5 2.2-2.5 2.2 1.1 2.2 2.5-1 2.5-2.2 2.5z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-sm font-semibold mb-4">Product</div>
+        <ul class="space-y-2 text-sm text-mid">
+          <li><a href="#features" class="hover:text-white transition">Features</a></li>
+          <li><a href="#showcase" class="hover:text-white transition">Showcase</a></li>
+          <li><a href="#pricing" class="hover:text-white transition">Pricing</a></li>
+          <li><a href="#" class="hover:text-white transition">Changelog</a></li>
+          <li><a href="#" class="hover:text-white transition">Roadmap</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="text-sm font-semibold mb-4">Studio</div>
+        <ul class="space-y-2 text-sm text-mid">
+          <li><a href="#" class="hover:text-white transition">Text → Image</a></li>
+          <li><a href="#" class="hover:text-white transition">Text → Video</a></li>
+          <li><a href="#" class="hover:text-white transition">Image → Video</a></li>
+          <li><a href="#" class="hover:text-white transition">AI Clones</a></li>
+          <li><a href="#" class="hover:text-white transition">Smart Photo Edit</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="text-sm font-semibold mb-4">Company</div>
+        <ul class="space-y-2 text-sm text-mid">
+          <li><a href="#" class="hover:text-white transition">About</a></li>
+          <li><a href="#" class="hover:text-white transition">Blog</a></li>
+          <li><a href="#" class="hover:text-white transition">Careers</a></li>
+          <li><a href="#" class="hover:text-white transition">Press kit</a></li>
+          <li><a href="#" class="hover:text-white transition">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pt-8 border-t border-[#141414] flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="text-xs text-dim">© 2025 Cap AI Inc. — Make imagination look real.</div>
+      <div class="flex gap-6 text-xs text-dim">
+        <a href="#" class="hover:text-white transition">Privacy</a>
+        <a href="#" class="hover:text-white transition">Terms</a>
+        <a href="#" class="hover:text-white transition">Safety</a>
+        <a href="#" class="hover:text-white transition">Ethics</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Cursor glow
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  // Feature card spotlight
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    });
+  });
+
+  // Reveal on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Stat counters
+  const statObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const target = parseInt(el.dataset.count, 10);
+        const suffix = el.dataset.suffix || (target === 98 ? '%' : (target === 120 ? '' : ''));
+        const isPercent = el.dataset.count === '98';
+        const isK = el.dataset.count === '4';
+        const isSec = el.dataset.suffix === 's';
+        let cur = 0;
+        const step = Math.max(1, Math.floor(target / 40));
+        const iv = setInterval(() => {
+          cur += step;
+          if (cur >= target) { cur = target; clearInterval(iv); }
+          el.textContent = cur + (isPercent ? '%' : (isK ? 'K' : (isSec ? 's' : '')));
+        }, 30);
+        statObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.4 });
+  document.querySelectorAll('[data-count]').forEach(el => statObserver.observe(el));
+
+  // Showcase tabs
+  const showcaseData = {
+    portrait: {
+      prompt: 'studio portrait of a woman, golden hour window light, 85mm f/1.4, subtle freckles, soft skin texture, Kodak Portra 400 tones',
+      tiles: [
+        { cls: 'tile-1', tag: 'Portrait', label: 'Window light', time: '00:14' },
+        { cls: 'tile-2', tag: 'Portrait', label: 'Golden hour', time: '00:11' },
+        { cls: 'tile-3', tag: 'Portrait', label: 'Soft rim', time: '00:09' }
+      ]
+    },
+    fashion: {
+      prompt: 'fashion editorial, model in oversized leather jacket, Tokyo alley at midnight, neon reflections on wet pavement, 35mm grain',
+      tiles: [
+        { cls: 'tile-4', tag: 'Fashion', label: 'Neon noir', time: '00:18' },
+        { cls: 'tile-5', tag: 'Fashion', label: 'Editorial', time: '00:15' },
+        { cls: 'tile-6', tag: 'Fashion', label: 'Runway', time: '00:12' }
+      ]
+    },
+    paparazzi: {
+      prompt: 'nighttime paparazzi photo, harsh flash, celebrity leaving restaurant, motion blur background, film grain, candid energy',
+      tiles: [
+        { cls: 'tile-7', tag: 'Paparazzi', label: 'Flash burst', time: '00:08' },
+        { cls: 'tile-1', tag: 'Paparazzi', label: 'Candid', time: '00:06' },
+        { cls: 'tile-8', tag: 'Paparazzi', label: 'Street', time: '00:07' }
+      ]
+    },
+    film: {
+      prompt: 'cinematic short film scene, lone figure walking through rain-soaked market at dawn, anamorphic lens flares, dolly-in, 2.39:1',
+      tiles: [
+        { cls: 'tile-2', tag: 'Short film', label: 'Dawn scene', time: '00:24' },
+        { cls: 'tile-3', tag: 'Short film', label: 'Rain market', time: '00:22' },
+        { cls: 'tile-5', tag: 'Short film', label: 'Anamorphic', time: '00:26' }
+      ]
+    },
+    wardrobe: {
+      prompt: 'transform subject into haute couture gown, preserve face and pose exactly, silk texture, dramatic studio lighting, 8K detail',
+      tiles: [
+        { cls: 'tile-4', tag: 'Wardrobe', label: 'Gown swap', time: '00:10' },
+        { cls: 'tile-6', tag: 'Wardrobe', label: 'Streetwear', time: '00:09' },
+        { cls: 'tile-8', tag: 'Wardrobe', label: 'Haute', time: '00:11' }
+      ]
+    }
+  };
+
+  const grid = document.getElementById('showcaseGrid');
+  const promptText = document.getElementById('promptText');
+
+  function renderShowcase(key) {
+    const d = showcaseData[key];
+    grid.innerHTML = d.tiles.map(t => `
+      <div class="tile ${t.cls}">
+        <div class="tile-tag">${t.tag}</div>
+        <div class="tile-label"><span>${t.label}</span><span class="lime">● ${t.time}</span></div>
+      </div>
+    `).join('');
+    promptText.textContent = d.prompt;
+  }
+  renderShowcase('portrait');
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderShowcase(btn.dataset.tab);
+    });
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      if (id.length > 1) {
+        const el = document.querySelector(id);
+        if (el) {
+          e.preventDefault();
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
