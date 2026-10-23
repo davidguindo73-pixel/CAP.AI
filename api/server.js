@@ -155,7 +155,7 @@ function readInput(body) {
     : (["1k", "2k", "4k"].includes(body.resolution) ? body.resolution : "2k");
   const duration = Math.min(15, Math.max(4, Number.parseInt(body.duration, 10) || 5));
   const multiShots = body.multiShots === true;
-  const videoModel = multiShots ? "kling" : (["seedance", "kling"].includes(body.videoModel) ? body.videoModel : "seedance");
+  const videoModel = multiShots ? "kling" : (["seedance", "kling", "kling-turbo"].includes(body.videoModel) ? body.videoModel : "seedance");
   return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind, videoModel, multiShots };
 }
 app.get("/api/health", (_req, res) => {
@@ -221,6 +221,14 @@ app.post("/api/generate", async (req, res, next) => {
         generate_audio: req.body.generateAudio !== false,
         enable_thinking: false,
         ...(input.refs.length ? (input.referenceKind === "video" ? { video_urls: input.refs } : { image_urls: input.refs }) : {})
+      };
+    } else if (input.videoModel === "kling-turbo") {
+      path = "/kling-video/v3.0-turbo/text-to-video";
+      payload = {
+        prompt: input.prompt,
+        duration: Math.min(15, Math.max(3, input.duration)),
+        resolution: ["720p", "1080p"].includes(input.resolution) ? input.resolution : "720p",
+        aspect_ratio: ["16:9", "9:16", "1:1"].includes(input.ratio) ? input.ratio : "16:9"
       };
     } else if (input.videoModel === "kling") {
       // Route to the actual provider tier corresponding to the selected resolution option.
