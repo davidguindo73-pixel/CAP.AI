@@ -148,7 +148,8 @@ function readInput(body) {
   const isVideo = ["video", "image-to-video", "video-restyle", "ad-video"].includes(mode);
   const imageRatio = ["auto", "1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "21:9"];
   const videoRatio = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"];
-  const ratio = cleanAspectRatio(body.aspectRatio, isVideo ? videoRatio : imageRatio, isVideo ? "9:16" : "auto");
+  let ratio = cleanAspectRatio(body.aspectRatio, isVideo ? videoRatio : imageRatio, isVideo ? "9:16" : "auto");
+  if (mode === "image-to-video" && !["16:9", "4:3", "1:1", "3:4", "9:16", "adaptive"].includes(ratio)) ratio = "adaptive";
   const resolution = isVideo
     ? (["480p", "720p", "1080p", "4k"].includes(body.resolution) ? body.resolution : "720p")
     : (["1k", "2k", "4k"].includes(body.resolution) ? body.resolution : "2k");
