@@ -29,7 +29,7 @@
 <header class="topbar"><div class="shell nav">
 <a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a>
 <nav class="nav-links" aria-label="Main navigation">
-<a href="index.html">Home</a><a href="studio.html">Studio</a><a href="examples.html" class="active">Examples</a><a href="account.html">Workspace</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a>
+<a href="index.html">Home</a><a href="create.html">Create AI</a><a href="studio.html">Prompt Lab</a><a href="examples.html" class="active">Examples</a><a href="account.html">Workspace</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a>
 </nav></div></header>
 <main class="shell">
 <section class="hero">
@@ -76,10 +76,10 @@
 <div class="notice"><strong>Prompt tip:</strong> For video, specify what moves, how the camera moves, how long the shot lasts, and what must remain consistent. For an image, focus on subject, composition, lens/lighting, materials and mood.</div>
 </section>
 </main>
-<footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="small dim">Creative examples · early preview</span></div><div class="footer-links" style="margin-top:18px"><a href="studio.html">Studio</a><a href="examples.html">Examples</a><a href="about.html">About</a><a href="press-kit.html">Press kit</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="contact.html">Feedback</a></div><p class="footer-note">Reference images belong to their respective sources. CAP.AI is currently a prompt-building preview; it does not render images or videos yet. © <span data-year></span> CAP.AI.</p></div></footer>
+<footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="small dim">Creative examples · early preview</span></div><div class="footer-links" style="margin-top:18px"><a href="studio.html">Studio</a><a href="examples.html">Examples</a><a href="about.html">About</a><a href="press-kit.html">Press kit</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="contact.html">Feedback</a></div><p class="footer-note">Reference images belong to their respective sources. CAP.AI is has a connected generation gateway prototype that requires separate backend deployment and provider credentials. © <span data-year></span> CAP.AI.</p></div></footer>
 <script src="assets/site.js"></script>
 <script>
-(()=>{document.querySelectorAll(".use-example").forEach(button=>button.addEventListener("click",()=>{const q=new URLSearchParams();["tool","idea","style","ratio","camera","duration","avoid"].forEach(k=>{const v=button.dataset[k];if(v)q.set(k,v)});window.location.href="studio.html?"+q.toString()}))})();
+(()=>{document.querySelectorAll(".use-example").forEach(button=>button.addEventListener("click",()=>{const q=new URLSearchParams();["tool","idea","style","ratio","camera","duration","avoid"].forEach(k=>{const v=button.dataset[k];if(v)q.set(k,v)});const aliases={animate:"image-to-video",restyle:"video-restyle",effects:"video",characters:"image",edit:"image"};const requested=q.get("tool")||"video";q.delete("tool");q.set("mode",aliases[requested]||requested);if(q.has("ratio"))q.set("ratio",q.get("ratio").split(" ")[0]);if(q.has("duration"))q.set("duration",String(parseInt(q.get("duration"),10)||8));window.location.href="create.html?"+q.toString()}))})();
 </script>
 </body>
 </html>
