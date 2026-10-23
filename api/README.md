@@ -8,9 +8,9 @@ This is the server-side generation gateway for the CAP.AI static frontend. It ca
 2. Deploy this folder as a **Node web service** (for example, on Render). Set the service root directory to `api`, build command to `npm install`, and start command to `npm start`. Use Node 20 or newer.
 3. Add environment variables from `.env.example`. Set `CORS_ORIGINS` to your exact website origin(s). Do not put a real provider key in this repository.
 4. Choose a credential mode:
-   - **Bring your own key (default):** leave `HF_API_KEY` and `CAP_API_ACCESS_TOKEN` unset. Each person enters their own provider key into the Studio for that browser session; CAP.AI does not save it in localStorage. The key is sent only over HTTPS to your API and is not logged or persisted by this server.
+   - **Bring your own key (default):** leave `HF_API_KEY` and `CAP_API_ACCESS_TOKEN` unset. Each person enters their own provider key into the Create AI page for that browser session; CAP.AI does not save it in localStorage. The key is sent only over HTTPS to your API and is not logged or persisted by this server.
    - **Single-owner preview:** set `HF_API_KEY` and a long random `CAP_API_ACCESS_TOKEN` on the server. The private app token must be entered in Studio when generating. Do not publish it or use this shared-key mode for a public website.
-5. Set the API base URL in the CAP.AI Create Studio page to the deployed service origin, for example `https://your-service.onrender.com` (no trailing `/api` path).
+5. Set the API base URL in the CAP.AI Create AI page to the deployed service origin, for example `https://your-service.onrender.com` (no trailing `/api` path).
 6. Check `GET /api/health` returns `ok: true`.
 
 ## Included routes
