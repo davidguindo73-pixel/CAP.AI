@@ -1,6 +1,6 @@
 # CAP.AI Generation API (prototype)
 
-This is the server-side generation gateway for the CAP.AI static frontend. It calls the documented Higgsfield API for **text-to-image**, **text-to-video**, **image/video reference-to-video**, and **product-ad image/video** workflows. It is not a locally trained foundation model; media is rendered by the selected provider model and returned to CAP.AI.
+This is the server-side generation gateway for the CAP.AI static frontend. It calls the documented Higgsfield API for **text-to-image**, **text-to-video**, **image/video reference-to-video**, **product-ad image/video**, **Kling multi-shot video**, and **Kling O3 video edits**. It is not a locally trained foundation model; media is rendered by the selected provider model and returned to CAP.AI.
 
 ## Deploy this backend
 
@@ -17,11 +17,11 @@ This is the server-side generation gateway for the CAP.AI static frontend. It ca
 
 - `GET /api/health` — readiness and credential-mode check.
 - `POST /api/uploads/signed-url` — get provider-signed uploads for reference images/videos.
-- `POST /api/generate` — start an image/video generation job.
+- `POST /api/generate` — start an image/video generation job. Current routing selects Marketing Studio Image for images, Seedance 2.0 or Kling 3.0 for text-to-video, Wan 3.0 reference-to-video for image/video-guided generation, and Kling O3 video-edit for the reference video edit workflow. Model account access and accepted parameters must be verified on the provider account.
 - `GET /api/jobs/:jobId` — poll job state and receive generated media URLs.
 - `POST /api/jobs/:jobId/cancel` — ask the provider to cancel a queued job.
 
-The frontend supplies `X-CAP-Client-ID` plus either `X-HF-API-Key` (BYOK mode) or `X-CAP-Access-Token` (single-owner preview mode). Do not log these request headers.
+The frontend supplies `X-CAP-Client-ID` plus either `X-HF-API-Key` (BYOK mode) or `X-CAP-Access-Token` (single-owner preview mode). The Create AI interface lets the user choose Seedance 2.0 or Kling 3.0 for text-to-video; choosing multi-shot automatically selects Kling. Reference video editing is sent to Kling O3. Do not log these request headers.
 
 ## Current limitations
 
