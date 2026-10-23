@@ -1,6 +1,6 @@
 # CAP.AI Generation API (prototype)
 
-This is the server-side generation gateway for the CAP.AI static frontend. It calls the documented Higgsfield API for **text-to-image**, **text-to-video**, **image/video reference-to-video**, **product-ad image/video**, **Kling multi-shot video**, and **Kling O3 video edits**. It is not a locally trained foundation model; media is rendered by the selected provider model and returned to CAP.AI.
+This is the server-side generation gateway for the CAP.AI static frontend. It calls the documented Higgsfield API for **text-to-image**, **text-to-video**, **image/video reference-to-video**, **product-ad image/video**, **Kling 3.0 Standard/Pro/4K multi-shot video**, **Kling 3.0 Turbo video**, **Kling image-to-video**, and **Kling O3 video edits**. It is not a locally trained foundation model; media is rendered by the selected provider model and returned to CAP.AI.
 
 ## Deploy this backend
 
@@ -17,7 +17,7 @@ This is the server-side generation gateway for the CAP.AI static frontend. It ca
 
 - `GET /api/health` — readiness and credential-mode check.
 - `POST /api/uploads/signed-url` — get provider-signed uploads for reference images/videos.
-- `POST /api/generate` — start an image/video generation job. Current routing selects Marketing Studio Image for images, Seedance 2.0 or Kling 3.0 for text-to-video, Wan 3.0 reference-to-video for image/video-guided generation, and Kling O3 video-edit for the reference video edit workflow. Model account access and accepted parameters must be verified on the provider account.
+- `POST /api/generate` — start an image/video generation job. Current routing selects Marketing Studio Image for images; Seedance 2.0, Kling 3.0 Standard/Pro/4K or Kling 3.0 Turbo for text-to-video; Wan 3.0 or Kling 3.0 for image-to-video; Wan 3.0 for reference-guided video workflows; and Kling O3 video-edit for reference video editing. Model account access and accepted parameters must be verified on the provider account.
 - `GET /api/jobs/:jobId` — poll job state and receive generated media URLs.
 - `POST /api/jobs/:jobId/cancel` — ask the provider to cancel a queued job.
 
