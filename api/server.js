@@ -185,7 +185,7 @@ app.post("/api/generate", async (req, res, next) => {
       payload = {
         prompt: input.prompt,
         duration: Math.min(30, Math.max(2, input.duration)),
-        resolution: input.resolution,
+        resolution: input.resolution === "4k" ? "1080p" : input.resolution,
         aspect_ratio: input.ratio === "auto" ? "adaptive" : input.ratio,
         generate_audio: req.body.generateAudio !== false,
         enable_thinking: false,
