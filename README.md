@@ -4,8 +4,9 @@ CAP.AI is an early frontend preview for an AI creative studio concept.
 
 ## What is in this repository
 
-- `index.html` — the public-facing homepage and interactive Prompt Lab.
-- `.nojekyll` — tells GitHub Pages not to run Jekyll processing on the static site.
+- `index.html` — the homepage and interactive Prompt Lab.
+- `.github/workflows/pages.yml` — publishes the homepage to GitHub Pages when `main` changes or the workflow is started manually.
+- `.nojekyll` — static-site marker.
 - `archive/Codes-original.html` — preserved copy of the original single-file draft.
 - `LICENSE` — repository license.
 
@@ -23,6 +24,11 @@ This preview does **not** generate images or videos. It does not yet include ima
 
 Open `index.html` in a browser. The page loads Tailwind CSS and fonts from external CDNs, so those visual styles need an internet connection.
 
-## GitHub Pages
+## GitHub Pages setup
 
-The static homepage file is placed in the repository root. To publish it, open **Settings → Pages** and configure the source as `main` / `/(root)` under **Deploy from a branch**, or use the repository's configured Pages deployment method. Confirm the latest Pages deployment has succeeded before treating the website as live.
+1. Open the repository's **Settings → Pages**.
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+3. Save the setting if GitHub shows a Save button.
+4. Open the **Actions** tab and confirm **Deploy CAP.AI preview to GitHub Pages** completes successfully.
+
+The workflow publishes only `index.html` and `.nojekyll` from the repository root, so archived source files and documentation are not exposed as part of the live site.
