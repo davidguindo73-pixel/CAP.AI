@@ -50,14 +50,14 @@
 <header class="topbar"><div class="shell nav">
 <a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a>
 <nav class="nav-links" aria-label="Main navigation">
-<a href="index.html">Home</a><a href="create.html" class="active">Create AI</a><a href="studio.html">Prompt Lab</a><a href="ads.html">Ad Studio</a><a href="examples.html">Examples</a><a href="account.html">Workspace</a><a href="contact.html">Contact</a>
+<a href="index.html">Home</a><a href="create.html" class="active">Create AI</a><a href="studio.html">Prompt Lab</a><a href="ads.html">Ad Studio</a><a href="examples.html">Examples</a><a href="workspace.html">Workspace</a><a href="contact.html">Contact</a>
 </nav></div></header>
 <main class="shell">
 <section class="hero">
 <div class="kicker">Creative engine · connected model preview</div>
 <h1>Make the idea.<br><span class="lime">Generate the media.</span></h1>
 <p class="lead">Create images, cinematic video clips, image-to-video animations and product-ad concepts in one workspace. Choose a workflow, guide the look, and generate through a connected media model.</p>
-<div class="notice"><strong>Setup required:</strong> CAP.AI's generation gateway must be deployed and connected to a provider account with model access and credits. CAP.AI does not train its own foundation model yet; this prototype connects a real external image/video model. Never commit provider keys to GitHub.</div>
+<div class="notice"><strong>Image creation:</strong> Generate campaign visuals from text using CAP.AI Image Generator. Video and reference-based generation still use the connected Higgsfield provider. Model access and API usage are billed through the configured provider account.</div>
 <div class="badge-row"><span class="pill">Text → Image</span><span class="pill">Text → Video</span><span class="pill">Image → Video</span><span class="pill">Reference Video</span><span class="pill">Product Ads</span></div>
 </section>
 
@@ -68,8 +68,8 @@
 <div class="kicker">01 · Create</div><h2>Creative brief</h2>
 <div class="field"><label for="mode">What are you making?</label>
 <select id="mode">
-<option value="video">Text → Video</option>
-<option value="image">Text → Image</option>
+<option value="image" selected>Text → Image · CAP.AI Image Generator</option>
+<option value="video">Text → Video · Higgsfield</option>
 <option value="image-to-video">Image → Video</option>
 <option value="video-restyle">Reference Video / Restyle</option>
 <option value="ad-video">Product Ad Video</option>
@@ -94,6 +94,7 @@
 </div>
 <div class="field"><label for="avoid">Things to avoid (optional)</label><input id="avoid" maxlength="1000" placeholder="Flicker, warped hands, changing outfit, random text"></div>
 <div class="two-col">
+<div class="field"><label for="imageModel">Image engine</label><select id="imageModel"><option value="gpt-image-2.5-flare">GPT Image Flare · faster</option><option value="gpt-image-2.5-sunburst">GPT Image Sunburst · detail</option></select></div>
 <div class="field"><label for="style">Visual style</label><select id="style">
 <option value="photorealistic, natural texture, realistic lighting">Photorealistic</option>
 <option value="cinematic composition, dramatic lighting, subtle film grain">Cinematic</option>
@@ -131,13 +132,14 @@
 </section>
 
 <section class="panel">
-<div class="kicker">02 · Connection</div><h2>Connect the generation engine</h2>
-<p class="small">Use your deployed CAP.AI API URL. If using your own provider key, enter it here; it is kept only in this page's memory and is not saved to browser storage. HTTPS is recommended outside localhost.</p>
+<div class="kicker">02 · Connection</div><h2>Connect the media engines</h2>
+<p class="small">CAP.AI Image Generator uses the server-side GPT Image engine. Sign in to Workspace or use the private beta token for image generation. Video and reference workflows use Higgsfield; you can enter your own Higgsfield key below. Keys stay only in this page's memory and are never saved to browser storage.</p>
 <div class="field"><label for="apiBase">CAP.AI API base URL</label><input id="apiBase" placeholder="https://your-cap-ai-api.onrender.com"></div>
 <div class="row" style="margin:-2px 0 16px"><a class="button secondary" href="https://render.com/deploy?repo=https://github.com/davidguindo73-pixel/CAP.AI" target="_blank" rel="noopener noreferrer">Deploy API on Render ↗</a><a class="small dim" href="https://open.higgsfield.ai/api-keys" target="_blank" rel="noopener noreferrer">Get provider API key ↗</a></div>
 <div class="two-col">
 <div class="field"><label for="hfKey">Your provider API key (BYOK)</label><input id="hfKey" type="password" autocomplete="off" placeholder="Paste complete key · not saved"></div>
-<div class="field"><label for="appToken">Private CAP.AI access token (only if configured)</label><input id="appToken" type="password" autocomplete="off" placeholder="Optional · not saved"></div>
+<div class="field"><label for="appToken">Private Higgsfield server access token (optional)</label><input id="appToken" type="password" autocomplete="off" placeholder="For shared Higgsfield key · not saved"></div>
+<div class="field"><label for="betaToken">CAP.AI private beta access token (for image generation)</label><input id="betaToken" type="password" autocomplete="off" placeholder="Private beta token from Render · not saved"></div>
 </div>
 <div class="row"><button id="checkConnection" class="button secondary" type="button">Check connection</button><span id="connectionBadge" class="pill">Not checked</span></div>
 <p id="connectionStatus" class="statusline" role="status" aria-live="polite">Deploy the API backend and configure credentials to enable generation.</p>
@@ -172,18 +174,19 @@
 (()=>{
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
-const form={mode:$("mode"),idea:$("idea"),avoid:$("avoid"),style:$("style"),ratio:$("ratio"),camera:$("camera"),duration:$("duration"),videoModel:$("videoModel"),shotMode:$("shotMode"),resolution:$("resolution"),quality:$("quality"),audio:$("audio"),reference:$("reference"),apiBase:$("apiBase"),hfKey:$("hfKey"),appToken:$("appToken"),productName:$("productName"),targetAudience:$("targetAudience"),keyBenefit:$("keyBenefit"),offer:$("offer"),callToAction:$("callToAction"),adPlatform:$("adPlatform"),brandTone:$("brandTone"),adBrief:$("adBrief")};
+const form={mode:$("mode"),idea:$("idea"),avoid:$("avoid"),style:$("style"),ratio:$("ratio"),camera:$("camera"),duration:$("duration"),videoModel:$("videoModel"),imageModel:$("imageModel"),betaToken:$("betaToken"),shotMode:$("shotMode"),resolution:$("resolution"),quality:$("quality"),audio:$("audio"),reference:$("reference"),apiBase:$("apiBase"),hfKey:$("hfKey"),appToken:$("appToken"),productName:$("productName"),targetAudience:$("targetAudience"),keyBenefit:$("keyBenefit"),offer:$("offer"),callToAction:$("callToAction"),adPlatform:$("adPlatform"),brandTone:$("brandTone"),adBrief:$("adBrief")};
 const clientKey="capAiClientIdV1",baseKey="capAiGenerationBaseV1";
 let clientId=localStorage.getItem(clientKey);
 if(!clientId){clientId=(crypto.randomUUID?crypto.randomUUID():("cap_"+Date.now()+"_"+Math.random().toString(36).slice(2)));localStorage.setItem(clientKey,clientId)}
-form.apiBase.value=localStorage.getItem(baseKey)||"";
+form.apiBase.value=localStorage.getItem(baseKey)||"https://cap-ai-generation-api.onrender.com";
+if(!localStorage.getItem(baseKey))localStorage.setItem(baseKey,form.apiBase.value);
 let activeJob=null,previewUrl=null,pollTimer=null,requestBusy=false;
-const defaultIdea="A young adult wearing an oversized black hoodie and baggy jeans walks alone through a neon-lit city street at 1 AM after rain. Purple and green lights reflect across wet pavement. Use direct-camera flash, subtle handheld camera shake, natural skin texture, film grain, imperfect focus and an atmospheric mysterious mood. Begin with a medium shot from behind, slowly move around to reveal the subject silhouette, then finish on the neon reflections on the pavement. Keep the outfit, proportions, light direction and environment consistent throughout.";
+const defaultIdea="Create a premium, photorealistic advertising visual for a matte-black reusable water bottle. Place the bottle on a sculptural stone pedestal with soft directional studio lighting, subtle water droplets, a warm neutral background, refined shadows and clean negative space for a headline. Show crisp product details, realistic materials, a modern editorial composition and polished commercial photography. No text, no logos, no watermark.";
 if(q.get("idea"))form.idea.value=q.get("idea").slice(0,5000);else form.idea.value=defaultIdea;
 ["mode","style","ratio","camera","duration","videoModel","shotMode","resolution","quality","audio","avoid","productName","targetAudience","keyBenefit","offer","callToAction","adPlatform","brandTone"].forEach(k=>{if(q.get(k)&&form[k])form[k].value=q.get(k)});
 $("charCount").textContent=form.idea.value.length+" / 5000";
 function base(){return form.apiBase.value.trim().replace(/\/+$/,"")}
-function clientHeaders(){const h={"Content-Type":"application/json","X-CAP-Client-ID":clientId};if(form.hfKey.value.trim())h["X-HF-API-Key"]=form.hfKey.value.trim();if(form.appToken.value)h["X-CAP-Access-Token"]=form.appToken.value;return h}
+function clientHeaders(){const h={"Content-Type":"application/json","X-CAP-Client-ID":clientId};if(form.hfKey.value.trim())h["X-HF-API-Key"]=form.hfKey.value.trim();if(form.appToken.value)h["X-CAP-Access-Token"]=form.appToken.value;if(form.betaToken.value)h["X-CAP-Ads-Token"]=form.betaToken.value;const customerToken=sessionStorage.getItem("capAiAccessTokenV1");if(customerToken)h.Authorization="Bearer "+customerToken;return h}
 function sayConnection(text,badge,type=""){ $("connectionStatus").textContent=text;const b=$("connectionBadge");b.textContent=badge;b.className="pill"+(type?" "+type:"")}
 function setResult(text){$("resultStatus").textContent=text}
 function buildPrompt(){
@@ -202,28 +205,106 @@ const adDetails=isAd?[
 ].filter(item=>item[1]).map(item=>item[0]+": "+item[1]+".").join("\n"):"";
 return idea+"\n\nWorkflow: "+modeName+".\nVisual direction: "+form.style.value+".\nCamera direction: "+form.camera.value+".\nAspect ratio: "+form.ratio.value+".\n"+(["image","ad-image"].includes(form.mode.value)?"Composition: clear subject, intentional framing and realistic detail.":"Video direction: coherent motion, stable subject identity, temporal continuity and intentional camera movement. Target duration: "+form.duration.value+" seconds.")+(form.shotMode.value==="multi"?"\nCreate a deliberate multi-shot sequence with consistent subject identity and clear shot-to-shot continuity.":"")+(adDetails?"\n\nCampaign brief:\n"+adDetails:"")+(form.avoid.value.trim()?"\nAvoid: "+form.avoid.value.trim()+".":"");
 }
-function modeChange(){const mode=form.mode.value;const isImage=["image","ad-image"].includes(mode);const isImageToVideo=mode==="image-to-video";const isVideoRestyle=mode==="video-restyle";form.adBrief.hidden=!["ad-image","ad-video"].includes(mode);Array.from(form.videoModel.options).forEach(o=>{o.disabled=isImageToVideo?!["kling","wan"].includes(o.value):(!isImage&&!isVideoRestyle&&o.value==="wan")});form.ratio.disabled=false;form.duration.disabled=isImage||isVideoRestyle;form.audio.disabled=isImage||isVideoRestyle||form.videoModel.value==="kling-turbo";form.quality.disabled=!isImage;if(isImage){form.videoModel.value="auto";form.videoModel.disabled=true;form.shotMode.value="single";form.shotMode.disabled=true;form.resolution.innerHTML='<option value="2k">2K</option><option value="1k">1K</option><option value="4k">4K</option>';form.resolution.value="2k";}else if(isVideoRestyle){form.videoModel.value="auto";form.videoModel.disabled=true;form.shotMode.value="single";form.shotMode.disabled=true;form.resolution.innerHTML='<option value="480p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode</option>';form.resolution.value="1080p";}else if(isImageToVideo){if(!["kling","wan"].includes(form.videoModel.value))form.videoModel.value="wan";form.videoModel.disabled=false;form.shotMode.disabled=form.videoModel.value!=="kling";if(form.shotMode.disabled)form.shotMode.value="single";if(form.videoModel.value==="kling"){form.resolution.innerHTML='<option value="720p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode · higher cost</option>';if(!["720p","1080p","4k"].includes(form.resolution.value))form.resolution.value="720p";form.ratio.disabled=true;}else{form.resolution.innerHTML='<option value="1080p">1080p</option><option value="720p">720p</option><option value="480p">480p</option>';if(!["1080p","720p","480p"].includes(form.resolution.value))form.resolution.value="1080p";}}else{form.videoModel.disabled=false;if(form.videoModel.value==="auto"||form.videoModel.value==="wan")form.videoModel.value="seedance";form.shotMode.disabled=form.videoModel.value!=="kling";if(form.shotMode.disabled)form.shotMode.value="single";form.resolution.innerHTML=form.videoModel.value==="kling"?'<option value="720p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode · higher cost</option>':(form.videoModel.value==="kling-turbo"?'<option value="720p">720p</option><option value="1080p">1080p</option>':'<option value="720p">720p</option><option value="1080p">1080p</option><option value="480p">480p</option><option value="4k">4K</option>');if(!Array.from(form.resolution.options).some(o=>o.value===form.resolution.value))form.resolution.value="720p";}if(!isImage&&form.ratio.value==="auto")form.ratio.value="9:16";if(["kling","kling-turbo"].includes(form.videoModel.value)&&!["16:9","9:16","1:1"].includes(form.ratio.value))form.ratio.value="9:16";}
+function modeChange(){const mode=form.mode.value;const isImage=["image","ad-image"].includes(mode);form.imageModel.closest(".field").hidden=!isImage;const isImageToVideo=mode==="image-to-video";const isVideoRestyle=mode==="video-restyle";form.videoModel.closest(".field").hidden=isImage||isVideoRestyle;form.shotMode.closest(".field").hidden=isImage||isVideoRestyle;form.duration.closest(".field").hidden=isImage||isVideoRestyle;form.resolution.closest(".field").hidden=isImage;form.quality.closest(".field").hidden=!isImage;form.audio.closest(".field").hidden=isImage||isVideoRestyle;$("#generate").textContent=isImage?"Generate image ↗":"Generate media ↗";form.adBrief.hidden=!["ad-image","ad-video"].includes(mode);Array.from(form.videoModel.options).forEach(o=>{o.disabled=isImageToVideo?!["kling","wan"].includes(o.value):(!isImage&&!isVideoRestyle&&o.value==="wan")});form.ratio.disabled=false;form.duration.disabled=isImage||isVideoRestyle;form.audio.disabled=isImage||isVideoRestyle||form.videoModel.value==="kling-turbo";form.quality.disabled=!isImage;if(isImage){form.videoModel.value="auto";form.videoModel.disabled=true;form.shotMode.value="single";form.shotMode.disabled=true;form.resolution.innerHTML='<option value="2k">2K</option><option value="1k">1K</option><option value="4k">4K</option>';form.resolution.value="2k";}else if(isVideoRestyle){form.videoModel.value="auto";form.videoModel.disabled=true;form.shotMode.value="single";form.shotMode.disabled=true;form.resolution.innerHTML='<option value="480p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode</option>';form.resolution.value="1080p";}else if(isImageToVideo){if(!["kling","wan"].includes(form.videoModel.value))form.videoModel.value="wan";form.videoModel.disabled=false;form.shotMode.disabled=form.videoModel.value!=="kling";if(form.shotMode.disabled)form.shotMode.value="single";if(form.videoModel.value==="kling"){form.resolution.innerHTML='<option value="720p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode · higher cost</option>';if(!["720p","1080p","4k"].includes(form.resolution.value))form.resolution.value="720p";form.ratio.disabled=true;}else{form.resolution.innerHTML='<option value="1080p">1080p</option><option value="720p">720p</option><option value="480p">480p</option>';if(!["1080p","720p","480p"].includes(form.resolution.value))form.resolution.value="1080p";}}else{form.videoModel.disabled=false;if(form.videoModel.value==="auto"||form.videoModel.value==="wan")form.videoModel.value="seedance";form.shotMode.disabled=form.videoModel.value!=="kling";if(form.shotMode.disabled)form.shotMode.value="single";form.resolution.innerHTML=form.videoModel.value==="kling"?'<option value="720p">Standard mode</option><option value="1080p">Pro mode</option><option value="4k">4K mode · higher cost</option>':(form.videoModel.value==="kling-turbo"?'<option value="720p">720p</option><option value="1080p">1080p</option>':'<option value="720p">720p</option><option value="1080p">1080p</option><option value="480p">480p</option><option value="4k">4K</option>');if(!Array.from(form.resolution.options).some(o=>o.value===form.resolution.value))form.resolution.value="720p";}if(!isImage&&form.ratio.value==="auto")form.ratio.value="9:16";if(["kling","kling-turbo"].includes(form.videoModel.value)&&!["16:9","9:16","1:1"].includes(form.ratio.value))form.ratio.value="9:16";}
 form.mode.addEventListener("change",modeChange);form.videoModel.addEventListener("change",()=>{if(form.videoModel.value!=="kling")form.shotMode.value="single";modeChange()});form.shotMode.addEventListener("change",()=>{if(form.shotMode.value==="multi")form.videoModel.value="kling";modeChange()});modeChange();
 form.idea.addEventListener("input",()=>$("charCount").textContent=form.idea.value.length+" / 5000");
 form.apiBase.addEventListener("change",()=>{if(base())localStorage.setItem(baseKey,base())});
 form.reference.addEventListener("change",()=>{const wrap=$("referencePreview");wrap.replaceChildren();if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;const file=form.reference.files?.[0];if(!file)return;if(file.size>40*1024*1024){form.reference.value="";setResult("Reference must be under 40 MB.");return}if(["image","ad-image"].includes(form.mode.value)&&!file.type.startsWith("image/")){form.reference.value="";setResult("Image workflows require an image reference, not a video.");return}previewUrl=URL.createObjectURL(file);let el;if(file.type.startsWith("video/")){el=document.createElement("video");el.controls=true;el.muted=true}else{el=document.createElement("img");el.alt="Selected reference preview"}el.src=previewUrl;const meta=document.createElement("span");meta.className="small dim";meta.textContent=file.name+" · "+(file.size/1024/1024).toFixed(1)+" MB";wrap.append(el,meta);if(["image-to-video","video-restyle"].includes(form.mode.value))setResult(file.type.startsWith("video/")?"Video reference selected.":"Image reference selected.");});
 async function parseResponse(response){let data;try{data=await response.json()}catch{data={error:"The API returned a response that was not JSON."}}if(!response.ok)throw new Error(data.error||"The API request failed with status "+response.status);return data}
-async function checkConnection(){const b=base();if(!b){sayConnection("Enter the deployed CAP.AI API URL first.","Missing URL","bad");return}try{sayConnection("Checking API…","Checking");localStorage.setItem(baseKey,b);const r=await fetch(b+"/api/health",{headers:clientHeaders()});const d=await parseResponse(r);if(d.generationReady===false)sayConnection("Backend has a shared key but is missing its app access token configuration.","Needs setup","bad");else sayConnection("Gateway reachable. Credential mode: "+d.credentialMode+". Provider is "+d.provider+".","Connected","good")}catch(e){sayConnection(e.message||"Could not reach API. Check URL and CORS settings.","Offline","bad")}}
+async function checkConnection(){const b=base();if(!b){sayConnection("Enter the deployed CAP.AI API URL first.","Missing URL","bad");return}try{sayConnection("Checking API…","Checking");localStorage.setItem(baseKey,b);const r=await fetch(b+"/api/health",{headers:clientHeaders()});const d=await parseResponse(r);if(d.generationReady===false)sayConnection("Video gateway needs its shared access token. Image engine "+(d.imageGenerationReady?"is ready.":"needs OPENAI_API_KEY in Render."),"Needs setup","bad");else sayConnection("API online · Image generator "+(d.imageGenerationReady?"ready":"needs OpenAI key")+" · Video provider "+d.credentialMode+".","Connected",d.imageGenerationReady?"good":"")}catch(e){sayConnection(e.message||"Could not reach API. Check URL and CORS settings.","Offline","bad")}}
 $("checkConnection").addEventListener("click",checkConnection);
 async function uploadReference(file){const signResponse=await fetch(base()+"/api/uploads/signed-url",{method:"POST",headers:clientHeaders(),body:JSON.stringify({contentType:file.type})});const signed=await parseResponse(signResponse);const uploaded=await fetch(signed.uploadUrl,{method:"PUT",headers:signed.uploadHeaders||{},body:file,credentials:"omit"});if(!uploaded.ok)throw new Error("Reference upload failed. Check the provider's file-upload access.");return signed.publicUrl}
 function renderMedia(items){const output=$("output");output.replaceChildren();if(!items?.length){output.innerHTML="<div><strong>Job completed, but no media URL was returned.</strong><p class='small'>Check the provider request status and model response.</p></div>";return}const stack=document.createElement("div");stack.className="output-stack";items.forEach(item=>{const card=document.createElement("div");card.className="output-card";let media;if(item.type==="video"){media=document.createElement("video");media.controls=true;media.playsInline=true}else{media=document.createElement("img");media.alt="Generated image result";media.loading="lazy"}media.src=item.url;const action=document.createElement("div");action.className="row spread";action.style.marginTop="9px";const label=document.createElement("span");label.className="small dim";label.textContent=item.type==="video"?"Generated video":"Generated image";const link=document.createElement("a");link.className="button secondary small";link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open / download ↗";action.append(label,link);card.append(media,action);stack.append(card)});output.append(stack)}
 async function pollJob(jobId){activeJob=jobId;$("progress").hidden=false;$("generate").disabled=true;const deadline=Date.now()+15*60*1000;while(Date.now()<deadline){if(!activeJob)throw new Error("Polling stopped.");$("jobStatus").textContent="Waiting for the model to finish…";await new Promise(resolve=>{pollTimer=setTimeout(resolve,4000)});if(!activeJob)throw new Error("Polling stopped.");const response=await fetch(base()+"/api/jobs/"+encodeURIComponent(jobId),{headers:clientHeaders()});const data=await parseResponse(response);$("jobStatus").textContent="Provider status: "+data.status+".";if(data.status==="completed"){renderMedia(data.media||[]);setResult("Generation completed. Your result is returned from the model provider.");return}if(["failed","nsfw","canceled"].includes(data.status))throw new Error(data.error||"Generation "+data.status+".")}throw new Error("This page stopped waiting after 15 minutes. The provider job may still be processing; try checking again later.")}
-$("generate").addEventListener("click",async()=>{if(requestBusy)return;requestBusy=true;$("generate").disabled=true;try{if(!base())throw new Error("Enter the deployed CAP.AI API URL in the Connection panel.");localStorage.setItem(baseKey,base());let prompt=buildPrompt();const file=form.reference.files?.[0];const mode=form.mode.value;if(["image-to-video","video-restyle"].includes(mode)&&!file)throw new Error("Select a reference image or video for this workflow.");if(mode==="image-to-video"&&file&&!file.type.startsWith("image/"))throw new Error("Image-to-video needs an image. Choose Reference Video / Restyle for a video file.");if(mode==="video-restyle"&&file&&!file.type.startsWith("video/"))throw new Error("Reference Video / Restyle needs a video file.");if(file&&["image","ad-image"].includes(mode)&&!file.type.startsWith("image/"))throw new Error("Image workflows require an image reference.");if(!form.hfKey.value.trim()&&!form.appToken.value)throw new Error("Enter your provider API key, or the private CAP.AI access token configured by the site owner.");
-$("output").innerHTML="<div><strong>Preparing your request…</strong><p class='small'>A reference may need to upload before generation.</p></div>";$("progress").hidden=false;$("jobStatus").textContent="Preparing request…";setResult("Generation submitted when the provider accepts the request.");
-let referenceUrls=[];let referenceKind="image";if(file){$("jobStatus").textContent="Uploading reference securely…";const url=await uploadReference(file);referenceUrls=[url];referenceKind=file.type.startsWith("video/")?"video":"image"}
-const payload={mode,prompt,aspectRatio:form.ratio.value,resolution:form.resolution.value,duration:Number(form.duration.value),quality:form.quality.value,generateAudio:form.audio.value==="true",videoModel:form.videoModel.value,multiShots:form.shotMode.value==="multi",referenceUrls,referenceKind};
-$("jobStatus").textContent="Submitting to model provider…";const response=await fetch(base()+"/api/generate",{method:"POST",headers:clientHeaders(),body:JSON.stringify(payload)});const data=await parseResponse(response);await pollJob(data.jobId);
-}catch(error){if(error.message==="Polling stopped."){setResult("Polling stopped; provider cancellation was requested.");$("output").innerHTML="<div><strong>Generation stopped</strong><p class='small'>The provider cancellation request was sent.</p></div>";}else{setResult(error.message||"Generation failed.");$("output").innerHTML="<div><strong>Could not complete generation</strong><p class='small'>"+escapeText(error.message||"Unknown error")+"</p></div>";}}
-finally{activeJob=null;$("progress").hidden=true;$("generate").disabled=false;requestBusy=false;clearTimeout(pollTimer)}});
+$("generate").addEventListener("click",async()=>{
+ if(requestBusy)return;
+ requestBusy=true;
+ $("generate").disabled=true;
+ try{
+  if(!base())throw new Error("CAP.AI API URL is missing. Refresh the page and check the Connection panel.");
+  localStorage.setItem(baseKey,base());
+  const prompt=buildPrompt();
+  const file=form.reference.files?.[0];
+  const mode=form.mode.value;
+  const isImage=["image","ad-image"].includes(mode);
+  if(["image-to-video","video-restyle"].includes(mode)&&!file)throw new Error("Select a reference image or video for this workflow.");
+  if(mode==="image-to-video"&&file&&!file.type.startsWith("image/"))throw new Error("Image-to-video needs an image. Choose Reference Video / Restyle for a video file.");
+  if(mode==="video-restyle"&&file&&!file.type.startsWith("video/"))throw new Error("Reference Video / Restyle needs a video file.");
+  if(file&&isImage&&!file.type.startsWith("image/"))throw new Error("Image workflows require an image reference.");
+  const customerToken=sessionStorage.getItem("capAiAccessTokenV1");
+  const canUseServerImage=Boolean(customerToken||form.betaToken.value.trim()||form.appToken.value.trim());
+  const useCapImageEngine=isImage&&!form.hfKey.value.trim()&&!file;
+
+  if(useCapImageEngine){
+   if(!canUseServerImage)throw new Error("Sign in to your CAP.AI Workspace or enter the private beta access token in the Connection panel to generate an image.");
+   $("output").innerHTML="<div><strong>Creating your visual…</strong><p class='small'>CAP.AI Image Generator is preparing your image.</p></div>";
+   $("progress").hidden=false;
+   $("jobStatus").textContent="Generating image with CAP.AI…";
+   setResult("Image request sent to the CAP.AI Image Generator.");
+   const response=await fetch(base()+"/api/images/generate",{
+    method:"POST",
+    headers:clientHeaders(),
+    body:JSON.stringify({
+     prompt,
+     model:form.imageModel.value,
+     aspectRatio:form.ratio.value,
+     quality:form.quality.value,
+     outputFormat:"png",
+     background:"auto"
+    })
+   });
+   const data=await parseResponse(response);
+   renderMedia([{url:data.imageDataUrl,type:"image"}]);
+   setResult("Image created · "+data.model+" · "+data.size+" · "+data.quality+" quality.");
+   return;
+  }
+
+  if(isImage&&file&&!form.hfKey.value.trim())throw new Error("Reference-image editing is not enabled in the CAP.AI Image Generator yet. Remove the reference image to create from text, or enter a Higgsfield API key to use its reference workflow.");
+  if(!form.hfKey.value.trim()&&!form.appToken.value)throw new Error("For video and reference workflows, enter your Higgsfield API key or the server access token configured by the owner.");
+
+  $("output").innerHTML="<div><strong>Preparing your request…</strong><p class='small'>A reference may need to upload before generation.</p></div>";
+  $("progress").hidden=false;
+  $("jobStatus").textContent="Preparing request…";
+  setResult("Generation submitted when the provider accepts the request.");
+  let referenceUrls=[];
+  let referenceKind="image";
+  if(file){
+   $("jobStatus").textContent="Uploading reference securely…";
+   const url=await uploadReference(file);
+   referenceUrls=[url];
+   referenceKind=file.type.startsWith("video/")?"video":"image";
+  }
+  const payload={
+   mode,prompt,aspectRatio:form.ratio.value,resolution:form.resolution.value,
+   duration:Number(form.duration.value),quality:form.quality.value,
+   generateAudio:form.audio.value==="true",videoModel:form.videoModel.value,
+   multiShots:form.shotMode.value==="multi",referenceUrls,referenceKind
+  };
+  $("jobStatus").textContent="Submitting to Higgsfield…";
+  const response=await fetch(base()+"/api/generate",{method:"POST",headers:clientHeaders(),body:JSON.stringify(payload)});
+  const data=await parseResponse(response);
+  await pollJob(data.jobId);
+ }catch(error){
+  if(error.message==="Polling stopped."){
+   setResult("Polling stopped; provider cancellation was requested.");
+   $("output").innerHTML="<div><strong>Generation stopped</strong><p class='small'>The provider cancellation request was sent.</p></div>";
+  }else{
+   setResult(error.message||"Generation failed.");
+   $("output").innerHTML="<div><strong>Could not complete generation</strong><p class='small'>"+escapeText(error.message||"Unknown error")+"</p></div>";
+  }
+ }finally{
+  activeJob=null;
+  $("progress").hidden=true;
+  $("generate").disabled=false;
+  requestBusy=false;
+  clearTimeout(pollTimer);
+ }
+});
 $("cancel").addEventListener("click",async()=>{if(!activeJob)return;const id=activeJob;try{await fetch(base()+"/api/jobs/"+encodeURIComponent(id)+"/cancel",{method:"POST",headers:clientHeaders(),body:"{}"});activeJob=null;setResult("Cancellation requested. Stopping the status poll shortly.")}catch(e){setResult("Could not cancel this job: "+e.message)}});
 $("buildPrompt").addEventListener("click",()=>{try{const prompt=buildPrompt();$("output").innerHTML="<div style='text-align:left;width:100%'><strong>Built prompt — not rendered</strong><pre id='promptText' style='white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;font:13px/1.6 ui-monospace,monospace;color:#d4d4d4'></pre><button class='button secondary small' id='copyBuilt' type='button'>Copy prompt</button></div>";$("promptText").textContent=prompt;document.getElementById("copyBuilt").onclick=async()=>{try{await navigator.clipboard.writeText(prompt);setResult("Prompt copied.")}catch{setResult("Select the prompt text and copy manually.")}};setResult("Prompt prepared. Click Generate media to render it.")}catch(e){setResult(e.message)}});
 function escapeText(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 $("reset").addEventListener("click",()=>{if(requestBusy){setResult("Wait for the current job or cancel it before resetting.");return}form.idea.value="";form.avoid.value="";form.reference.value="";$("referencePreview").replaceChildren();$("output").innerHTML="<div><strong>Your result will appear here</strong><p class='small'>Connect the API, write a brief and select Generate media.</p></div>";$("charCount").textContent="0 / 5000";setResult("New brief ready.")});
+checkConnection();
 })();
 </script>
 </body></html>
