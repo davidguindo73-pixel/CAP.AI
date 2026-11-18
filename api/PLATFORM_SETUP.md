@@ -37,9 +37,9 @@ Set these Render variables:
 - META_APP_SECRET
 - META_REDIRECT_URI (the exact callback above)
 - META_GRAPH_API_VERSION = v27.0 (or another version currently supported by your app)
-- META_OAUTH_SCOPES = ads_read,ads_management,business_management,pages_show_list,pages_read_engagement
+- META_OAUTH_SCOPES = ads_read,ads_management,business_management,pages_show_list,pages_read_engagement,pages_manage_ads
 
-Request only the permissions needed for the product and complete Meta App Review / Marketing API access requirements. The account owner must grant CAP.AI access to the relevant ad account and Facebook Page.
+Request only the permissions needed for the product and complete Meta App Review / Marketing API access requirements. The account owner must grant CAP.AI access to the relevant ad account and Facebook Page, including the Page's ADVERTISE task. The Workspace includes Page discovery and validates that task before publishing.
 
 Once connected, CAP.AI can list accessible Meta ad accounts and request last-30-day campaign insights. For publishing, the campaign must be marked approved in Ad Studio. The paused-campaign builder also requires an ad account ID, Facebook Page ID, public HTTPS image URL, landing page URL, country code and daily budget. It creates the campaign, ad set, creative and ad in PAUSED state. Nothing spends until the user explicitly activates it and re-enters the exact daily budget.
 
