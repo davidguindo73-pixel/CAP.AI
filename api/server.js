@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import adsRouter from "./ads.js";
+import { resolveUserFromRequest } from "./platform.js";
 import platformRouter from "./platform.js";
 
 const app = express();
@@ -171,10 +172,121 @@ app.get("/api/health", (_req, res) => {
     provider: "Higgsfield API",
     credentialMode: process.env.HF_API_KEY ? "server-key" : "bring-your-own-key",
     generationReady: !process.env.HF_API_KEY || Boolean(process.env.CAP_API_ACCESS_TOKEN),
+    imageGenerationReady: Boolean(process.env.OPENAI_API_KEY),
+    imageModels: ["gpt-image-2.5-flare", "gpt-image-2.5-sunburst"],
     modes: ["image", "video", "image-to-video", "video-restyle", "ad-image", "ad-video"],
     engines: ["marketing-studio/image", "bytedance/seedance-2.0/text-to-video", "kling-video/v3.0/std/text-to-video", "kling-video/v3.0/pro/text-to-video", "kling-video/v3.0/4k/text-to-video", "kling-video/v3.0-turbo/text-to-video", "kling-video/v3.0/std/image-to-video", "kling-video/v3.0/pro/image-to-video", "kling-video/v3.0/4k/image-to-video", "alibaba/wan-3.0/reference-to-video", "kling-video/o3/video-edit"],
     note: "Provider account, model access and credits are required. Customer login, profiles, OAuth connections, analytics and subscription routes are available when their provider settings are configured."
   });
+});
+
+
+const imageGenerationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 12,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Image generation limit reached for this hour. Please try again later." }
+});
+
+app.post("/api/images/generate", imageGenerationLimiter, async (req, res, next) => {
+  try {
+    const sessionUser = await resolveUserFromRequest(req).catch((error) => {
+      if (error.status === 503 && !process.env.DATABASE_URL) return null;
+      throw error;
+    });
+    const privateToken = String(req.get("X-CAP-Ads-Token") || req.get("X-CAP-Access-Token") || "");
+    const expectedTokens = [
+      process.env.CAP_IMAGE_ACCESS_TOKEN,
+      process.env.CAP_ADS_ACCESS_TOKEN,
+      process.env.CAP_API_ACCESS_TOKEN
+    ].filter(Boolean);
+    const privateBetaAccess = expectedTokens.some((value) => safeEqual(privateToken, value));
+    if (!sessionUser && !privateBetaAccess) {
+      return res.status(401).json({ error: "Sign in to your CAP.AI Workspace or use the private beta access token." });
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({ error: "CAP.AI Image Generator is not configured yet. Add OPENAI_API_KEY to the Render environment." });
+    }
+
+    const prompt = String(req.body?.prompt || "").trim();
+    if (!prompt || prompt.length > 6000) {
+      return res.status(400).json({ error: "Image prompt must be between 1 and 6,000 characters." });
+    }
+    const model = ["gpt-image-2.5-flare", "gpt-image-2.5-sunburst"].includes(req.body?.model)
+      ? req.body.model
+      : "gpt-image-2.5-flare";
+    const aspectRatio = String(req.body?.aspectRatio || "1:1");
+    const dimensions = {
+      "1:1": "1024x1024",
+      "16:9": "1536x864",
+      "9:16": "864x1536",
+      "4:3": "1536x1152",
+      "3:4": "1152x1536",
+      "21:9": "1536x656",
+      auto: "auto"
+    };
+    const size = dimensions[aspectRatio] || "1024x1024";
+    const quality = ["low", "medium", "high", "xhigh", "max"].includes(req.body?.quality)
+      ? req.body.quality
+      : "high";
+    const outputFormat = ["png", "webp", "jpeg"].includes(req.body?.outputFormat)
+      ? req.body.outputFormat
+      : "png";
+    const background = ["auto", "opaque", "transparent"].includes(req.body?.background)
+      ? req.body.background
+      : "auto";
+    const safetyIdentifier = crypto.createHash("sha256")
+      .update(String(sessionUser?.id || req.get("X-CAP-Client-ID") || "cap-ai-private-beta"))
+      .digest("hex")
+      .slice(0, 64);
+
+    const response = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + process.env.OPENAI_API_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        n: 1,
+        size,
+        quality,
+        output_format: outputFormat,
+        background,
+        moderation: "auto",
+        safety_identifier: safetyIdentifier
+      }),
+      signal: AbortSignal.timeout(180_000)
+    });
+    const raw = await response.text();
+    let result;
+    try { result = raw ? JSON.parse(raw) : {}; }
+    catch { throw Object.assign(new Error("The image provider returned an unreadable response."), { status: 502 }); }
+    if (!response.ok) {
+      const providerMessage = result?.error?.message;
+      const message = response.status === 401
+        ? "The image provider key is invalid. Check OPENAI_API_KEY in Render."
+        : response.status === 429
+          ? "The image provider is rate-limiting requests or has reached its usage limit. Check your API project limits."
+          : (typeof providerMessage === "string" ? providerMessage.slice(0, 400) : "Image generation failed at the provider.");
+      throw Object.assign(new Error(message), { status: response.status === 429 ? 429 : 502 });
+    }
+    const imageData = result?.data?.[0]?.b64_json;
+    if (typeof imageData !== "string" || !imageData.length) {
+      throw Object.assign(new Error("The image provider did not return image data."), { status: 502 });
+    }
+    res.json({
+      ok: true,
+      model,
+      size: result.size || size,
+      quality: result.quality || quality,
+      outputFormat: result.output_format || outputFormat,
+      imageDataUrl: "data:image/" + outputFormat + ";base64," + imageData,
+      usage: result.usage || null
+    });
+  } catch (error) { next(error); }
 });
 
 app.post("/api/uploads/signed-url", async (req, res, next) => {
