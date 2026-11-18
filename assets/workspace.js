@@ -52,7 +52,7 @@ async function loadConnections(){
       if(!(data.pages||[]).length)pagesBox.textContent="No Pages returned. Confirm pages_show_list permission and that this user manages a Facebook Page.";
       for(const page of data.pages||[]){
        const row=el("div","ws-row");
-       row.append(el("span","",page.name+" · "+page.id));
+       row.append(el("span","",page.name+" · "+page.id+(page.canAdvertise?" · Ads access confirmed":" · ADVERTISE task not confirmed")));
        const choose=el("button","button secondary","Use this Page for ads");choose.type="button";
        choose.addEventListener("click",()=>{sessionStorage.setItem("capAiMetaPageId",page.id);msg("integrationMessage","Selected "+page.name+" for Meta ads. Return to Ad Studio to create a paused campaign.");});
        row.append(choose);pagesBox.append(row);
