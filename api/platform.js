@@ -465,7 +465,7 @@ function validateLaunchInput(body) {
   const dailyBudget = Number(body?.dailyBudget);
   const destinationUrl = String(body?.destinationUrl || "").trim();
   const countryCode = String(body?.countryCode || "US").trim().toUpperCase();
-  if (!/^\d{5,30}$/.test(accountId)) throw fail(400, "Choose a valid advertising account ID.");
+  if (!/^\d{10}$/.test(accountId)) throw fail(400, "Google Ads customer IDs must contain exactly 10 digits.");
   if (!Number.isFinite(dailyBudget) || dailyBudget < 1 || dailyBudget > 5000) throw fail(400, "Set a daily budget between 1 and 5,000 in the account currency.");
   if (!/^https:\/\//i.test(destinationUrl)) throw fail(400, "Enter a public HTTPS destination URL.");
   if (!/^[A-Z]{2}$/.test(countryCode)) throw fail(400, "Enter a two-letter country code for campaign targeting.");
