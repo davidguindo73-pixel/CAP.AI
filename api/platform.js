@@ -542,8 +542,8 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
       const pageId = String(req.body?.pageId || "").replace(/[^0-9]/g, "");
       const selectedPage = (connection.metadata?.pages || []).find((page) => String(page.id) === pageId);
       if (!pageId || !selectedPage) throw fail(400, "Load your Facebook Pages in Workspace and select one before creating a Meta ad.");
-      if (selectedPage.tasks?.length && !selectedPage.tasks.includes("ADVERTISE")) {
-        throw fail(403, "The selected Facebook Page does not grant the ADVERTISE task to this connection.");
+      if (selectedPage.canAdvertise !== true) {
+        throw fail(403, "The selected Facebook Page does not confirm the ADVERTISE task for this connection. Reconnect with the required Page permissions or choose another Page.");
       }
       const pageAccessToken = decrypt(selectedPage.accessTokenEnc) || accessToken;
       const imageUrl = String(req.body?.imageUrl || "").trim();
