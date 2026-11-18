@@ -99,7 +99,7 @@ router.get("/platform/status", async (_req, res, next) => {
       businessProfiles: Boolean(pool),
       tokenVault: Boolean(process.env.CAP_TOKEN_ENCRYPTION_KEY),
       integrations: {
-        meta: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && process.env.META_GRAPH_API_VERSION),
+        meta: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && (process.env.META_GRAPH_API_VERSION || "v27.0")),
         google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI && process.env.GOOGLE_ADS_DEVELOPER_TOKEN),
         tiktok: Boolean(process.env.TIKTOK_APP_ID && process.env.TIKTOK_APP_SECRET && process.env.TIKTOK_ADVERTISER_AUTH_URL && process.env.TIKTOK_REDIRECT_URI)
       },
@@ -214,7 +214,7 @@ async function consumeOAuthState(raw, platform) {
   return result.rows[0];
 }
 function providerReady(platform) {
-  if (platform === "meta") return Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && process.env.META_GRAPH_API_VERSION);
+  if (platform === "meta") return Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && (process.env.META_GRAPH_API_VERSION || "v27.0"));
   if (platform === "google") return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI);
   if (platform === "tiktok") return Boolean(process.env.TIKTOK_APP_ID && process.env.TIKTOK_APP_SECRET && process.env.TIKTOK_ADVERTISER_AUTH_URL && process.env.TIKTOK_REDIRECT_URI);
   return false;
@@ -256,7 +256,7 @@ async function finishOAuth(platform, code, state) {
   const stateData = await consumeOAuthState(state, platform);
   const userId = stateData.user_id;
   if (platform === "meta") {
-    const version = process.env.META_GRAPH_API_VERSION;
+    const version = (process.env.META_GRAPH_API_VERSION || "v27.0");
     const params = new URLSearchParams({
       client_id: process.env.META_APP_ID,
       client_secret: process.env.META_APP_SECRET,
@@ -330,9 +330,9 @@ router.get("/integrations/:platform/connect", requireUser, async (req, res, next
     if (platform === "meta") {
       const params = new URLSearchParams({
         client_id: process.env.META_APP_ID, redirect_uri: redirectUri, state,
-        response_type: "code", scope: process.env.META_OAUTH_SCOPES || "ads_read,ads_management,business_management"
+        response_type: "code", scope: process.env.META_OAUTH_SCOPES || "ads_read,ads_management,business_management,pages_show_list,pages_read_engagement"
       });
-      target = "https://www.facebook.com/" + process.env.META_GRAPH_API_VERSION + "/dialog/oauth?" + params.toString();
+      target = "https://www.facebook.com/" + (process.env.META_GRAPH_API_VERSION || "v27.0") + "/dialog/oauth?" + params.toString();
     } else if (platform === "google") {
       const params = new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID, redirect_uri: redirectUri, response_type: "code",
@@ -398,7 +398,7 @@ router.get("/integrations/:platform/accounts", requireUser, async (req, res, nex
     const accessToken = await accessTokenFor(connection, platform);
     let accounts = [];
     if (platform === "meta") {
-      const data = await remoteJson("https://graph.facebook.com/" + process.env.META_GRAPH_API_VERSION + "/me/adaccounts?fields=id,name,account_status,currency,timezone_name&limit=100&access_token=" + encodeURIComponent(accessToken));
+      const data = await remoteJson("https://graph.facebook.com/" + (process.env.META_GRAPH_API_VERSION || "v27.0") + "/me/adaccounts?fields=id,name,account_status,currency,timezone_name&limit=100&access_token=" + encodeURIComponent(accessToken));
       accounts = (data.data || []).map((item) => ({ id: item.id, name: item.name, status: item.account_status, currency: item.currency, timezone: item.timezone_name }));
     } else if (platform === "google") {
       if (!process.env.GOOGLE_ADS_DEVELOPER_TOKEN) throw fail(503, "Add GOOGLE_ADS_DEVELOPER_TOKEN to use Google Ads account discovery.");
@@ -431,7 +431,7 @@ router.get("/analytics/:platform", requireUser, async (req, res, next) => {
     let report;
     if (platform === "meta") {
       const id = accountId.startsWith("act_") ? accountId : "act_" + accountId;
-      report = await remoteJson("https://graph.facebook.com/" + process.env.META_GRAPH_API_VERSION + "/" + id + "/insights?fields=campaign_name,impressions,clicks,spend,reach,ctr,cpc,actions&date_preset=last_30d&level=campaign&access_token=" + encodeURIComponent(accessToken));
+      report = await remoteJson("https://graph.facebook.com/" + (process.env.META_GRAPH_API_VERSION || "v27.0") + "/" + id + "/insights?fields=campaign_name,impressions,clicks,spend,reach,ctr,cpc,actions&date_preset=last_30d&level=campaign&access_token=" + encodeURIComponent(accessToken));
     } else if (platform === "google") {
       if (!process.env.GOOGLE_ADS_DEVELOPER_TOKEN) throw fail(503, "Google Ads API developer token is not configured.");
       const query = "SELECT campaign.id, campaign.name, campaign.status, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions FROM campaign WHERE segments.date DURING LAST_30_DAYS ORDER BY metrics.impressions DESC";
@@ -514,7 +514,7 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
     const brief = campaign.brief || {};
     const deliverables = campaign.deliverables || {};
     if (platform === "meta") {
-      const version = process.env.META_GRAPH_API_VERSION;
+      const version = (process.env.META_GRAPH_API_VERSION || "v27.0");
       const accounts = await remoteJson("https://graph.facebook.com/" + version + "/me/adaccounts?fields=id,currency&limit=100&access_token=" + encodeURIComponent(accessToken));
       const chosen = (accounts.data || []).find((item) => String(item.id).replace(/^act_/, "") === input.accountId);
       if (!chosen) throw fail(403, "That Meta ad account is not accessible through the connected account.");
@@ -682,7 +682,7 @@ router.post("/publish/:platform/:publicationId/activate", requireUser, async (re
     const connection = await getConnection(req.capUser.id, platform);
     const accessToken = await accessTokenFor(connection, platform);
     if (platform === "meta") {
-      const version = process.env.META_GRAPH_API_VERSION;
+      const version = (process.env.META_GRAPH_API_VERSION || "v27.0");
       const postStatus = async (id) => remoteJson("https://graph.facebook.com/" + version + "/" + id, {
         method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ status: "ACTIVE", access_token: accessToken })
