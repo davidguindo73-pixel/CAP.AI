@@ -537,7 +537,8 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
         special_ad_categories: "[]",
         buying_type: "AUCTION"
       });
-      campaignResource = campaignResult.id;\n      publicationCurrency = chosen.currency || req.body.currency || "USD";
+      campaignResource = campaignResult.id;
+      publicationCurrency = chosen.currency || req.body.currency || "USD";
       const targeting = {
         geo_locations: { countries: [input.countryCode] },
         publisher_platforms: ["facebook", "instagram"]
