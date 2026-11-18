@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Manage your CAP.AI business profile, connected advertising accounts and subscription.">
+<meta name="theme-color" content="#050505">
+<title>Workspace · CAP.AI</title>
+<link rel="icon" href="assets/cap-ai-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.ws-hero{padding:42px 0 20px}.ws-hero h1{font-size:clamp(38px,6vw,60px);letter-spacing:-.06em;line-height:1.05;margin:10px 0}.ws-hero p{color:var(--muted);max-width:720px}
+.ws-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.ws-panel{background:#0b0b0b;border:1px solid var(--border);border-radius:18px;padding:22px}
+.ws-panel h2{font-size:21px;letter-spacing:-.04em;margin:4px 0 15px}
+.ws-field{display:grid;gap:6px;margin:0 0 12px}.ws-field label{font-size:12px;color:#ddd;font-weight:600}
+.ws-field input,.ws-field textarea,.ws-field select{width:100%;color:#f5f5f5;background:#111;border:1px solid #343434;border-radius:10px;padding:11px 12px}
+.ws-field textarea{min-height:76px;resize:vertical}
+.ws-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.ws-status{font-size:12px;color:#aaa;line-height:1.6}.ws-alert{border:1px solid #333;background:#111;border-radius:11px;padding:12px;color:#bbb;font-size:12px;line-height:1.6;margin:10px 0}
+.ws-integrations{display:grid;gap:10px}
+.ws-provider{border:1px solid #303030;border-radius:12px;padding:13px;background:#080808;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.ws-provider strong{display:block;font-size:14px}.ws-provider small{display:block;color:#999;font-size:11px;margin-top:3px}
+.ws-account{font-size:12px;color:#ccc;margin-top:7px}
+.ws-hidden{display:none!important}
+@media(max-width:800px){.ws-grid{grid-template-columns:1fr}.ws-panel{padding:16px}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell nav">
+<a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a>
+<nav class="nav-links" aria-label="Main navigation">
+<a href="index.html">Home</a><a href="create.html">Create AI</a><a href="ads.html">Ad Studio</a><a href="examples.html">Examples</a><a href="studio.html">Prompt Lab</a><a href="workspace.html" class="active">Workspace</a>
+</nav></div></header>
+<main class="shell">
+<section class="ws-hero">
+<div class="kicker">CAP.AI · Customer workspace</div>
+<h1>Your business.<br><span class="lime">Your campaigns.</span></h1>
+<p>Manage your account, save your brand profile, connect ad platforms, review performance reports and manage your CAP.AI subscription.</p>
+<div id="workspaceStatus" class="ws-status" role="status" aria-live="polite">Checking CAP.AI services…</div>
+</section>
+<section class="section" style="padding-top:8px">
+<div class="ws-grid">
+<section class="ws-panel" id="authPanel">
+<div class="kicker">01 · Customer account</div><h2>Sign in or create an account</h2>
+<form id="authForm">
+<div class="ws-field"><label for="authName">Name (for new accounts)</label><input id="authName" name="name" maxlength="100" placeholder="Your name"></div>
+<div class="ws-field"><label for="authEmail">Email</label><input id="authEmail" name="email" type="email" autocomplete="email" required></div>
+<div class="ws-field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" autocomplete="current-password" minlength="12" required><small class="ws-status">Use at least 12 characters.</small></div>
+<div class="ws-row"><button id="authSubmit" class="button" type="submit">Sign in</button><button id="authMode" class="button secondary" type="button">Create account</button></div>
+</form>
+<div id="authMessage" class="ws-alert" role="status">A customer account keeps your business profile and campaigns separate from other businesses.</div>
+</section>
+<section class="ws-panel ws-hidden" id="signedInPanel">
+<div class="kicker">01 · Account</div><h2>You're signed in</h2>
+<p id="signedInUser" class="ws-status"></p>
+<div class="ws-alert">Your customer workspace is protected by a server-managed session. Sign out when you finish using a shared device.</div>
+<button id="signOut" class="button secondary" type="button">Sign out</button>
+</section>
+<section class="ws-panel ws-hidden" id="profilePanel">
+<div class="kicker">02 · Business profile</div><h2>Save your brand details</h2>
+<form id="profileForm">
+<div class="ws-field"><label for="profileName">Business name *</label><input id="profileName" name="businessName" required maxlength="120"></div>
+<div class="ws-field"><label for="profileWebsite">Website</label><input id="profileWebsite" name="website" type="url" placeholder="https://example.com"></div>
+<div class="ws-field"><label for="profileIndustry">Industry</label><input id="profileIndustry" name="industry" maxlength="100"></div>
+<div class="ws-field"><label for="profileLocation">Location</label><input id="profileLocation" name="location" maxlength="160"></div>
+<div class="ws-field"><label for="profileDescription">Business description</label><textarea id="profileDescription" name="description" maxlength="1500"></textarea></div>
+<div class="ws-field"><label for="profileProducts">Products or services (one per line)</label><textarea id="profileProducts" name="products" placeholder="Service one&#10;Product two"></textarea></div>
+<div class="ws-grid">
+<div class="ws-field"><label for="profileLogo">Public logo URL</label><input id="profileLogo" name="logoUrl" type="url" placeholder="https://..."></div>
+<div class="ws-field"><label for="profileColor">Brand color</label><input id="profileColor" name="brandColor" type="text" maxlength="7" placeholder="#111111"></div>
+</div>
+<div class="ws-field"><label for="profileVoice">Brand voice</label><input id="profileVoice" name="brandVoice" maxlength="300" placeholder="Friendly, premium, bold…"></div>
+<button class="button" type="submit">Save business profile</button>
+</form>
+<div id="profileMessage" class="ws-status" aria-live="polite"></div>
+</section>
+<section class="ws-panel ws-hidden" id="connectionsPanel">
+<div class="kicker">03 · Advertising accounts</div><h2>Connect your ad platforms</h2>
+<p class="ws-status">CAP.AI requests account permissions so you can view reporting and prepare campaigns. You will review and approve any ad spend separately.</p>
+<div id="providerList" class="ws-integrations"></div>
+<div id="integrationMessage" class="ws-status" aria-live="polite"></div>
+</section>
+<section class="ws-panel ws-hidden" id="analyticsPanel">
+<div class="kicker">04 · Performance</div><h2>Campaign analytics</h2>
+<div class="ws-field"><label for="analyticsPlatform">Platform</label><select id="analyticsPlatform"><option value="meta">Meta</option><option value="google">Google Ads</option><option value="tiktok">TikTok</option></select></div>
+<div class="ws-field"><label for="analyticsAccount">Ad account ID</label><input id="analyticsAccount" placeholder="Choose an account ID from connected accounts"></div>
+<button id="loadAnalytics" class="button secondary" type="button">Load last 30 days</button>
+<pre id="analyticsOutput" class="ws-alert" style="white-space:pre-wrap;overflow:auto">Your campaign analytics will appear here.</pre>
+</section>
+<section class="ws-panel ws-hidden" id="billingPanel">
+<div class="kicker">05 · Subscription</div><h2>CAP.AI billing</h2>
+<p id="billingStatus" class="ws-status">Checking subscription…</p>
+<div class="ws-row" style="margin:12px 0">
+<button class="button" data-plan="starter" type="button">Choose Starter</button>
+<button class="button secondary" data-plan="pro" type="button">Choose Pro</button>
+<button id="billingPortal" class="button secondary" type="button">Manage billing</button>
+</div>
+<p class="ws-status">Prices are configured by the CAP.AI owner in Stripe. No charge occurs until you confirm the checkout with Stripe.</p>
+</section>
+<section class="ws-panel">
+<div class="kicker">06 · Build & launch</div><h2>Continue to Ad Studio</h2>
+<p class="ws-status">Create campaign strategies, ad copy and creative concepts. Once your account is connected, campaign generation can use your saved business profile.</p>
+<a class="button" href="ads.html">Open Advertising Studio</a>
+<div class="ws-alert">Publishing through Meta, Google Ads and TikTok requires CAP.AI's developer apps to pass each platform's permission review. New campaigns should be created paused and activated only after you confirm the budget and schedule.</div>
+</section>
+</div>
+</section>
+</main>
+<footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="muted small">Created by David Guindo</span></div></div></footer>
+<script src="assets/workspace.js"></script>
+</body>
+</html>
