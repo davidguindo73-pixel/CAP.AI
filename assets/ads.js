@@ -237,6 +237,75 @@
         await loadCampaigns(false);
       } catch (error) { setStatus(error.message); }
     });
+
+    function addPausedPublishControl(platform, label) {
+      if (!sessionStorage.getItem("capAiAccessTokenV1")) return;
+      const createButton = node("button", "button secondary small", "Create " + label + " paused");
+      createButton.type = "button";
+      createButton.addEventListener("click", async () => {
+        if (statusSelect.value !== "approved") {
+          setStatus("Set the campaign status to approved and save it before creating a platform campaign.");
+          return;
+        }
+        const accountId = prompt(platform === "meta" ? "Meta ad account ID (digits only):" : "Google Ads customer ID (digits only):");
+        if (!accountId) return;
+        const destinationUrl = prompt("Public HTTPS landing page URL:", campaign.brief?.website || "");
+        if (!destinationUrl) return;
+        const dailyBudget = prompt("Daily budget in the ad account currency (minimum 1):", "10");
+        if (!dailyBudget || !Number.isFinite(Number(dailyBudget))) return;
+        const countryCode = prompt("Two-letter country code for targeting:", "US");
+        if (!countryCode) return;
+        const payload = { accountId, destinationUrl, dailyBudget: Number(dailyBudget), countryCode };
+        if (platform === "meta") {
+          payload.pageId = prompt("Facebook Page ID with ad permissions:");
+          if (!payload.pageId) return;
+          payload.imageUrl = prompt("Public HTTPS URL of the final ad image:");
+          if (!payload.imageUrl) return;
+        }
+        createButton.disabled = true;
+        try {
+          await request("/api/ads/campaigns/" + encodeURIComponent(campaign.id), {
+            method: "PATCH", body: JSON.stringify({ status: "approved" })
+          });
+          const data = await request("/api/publish/" + platform + "/" + encodeURIComponent(campaign.id), {
+            method: "POST", body: JSON.stringify(payload)
+          });
+          const publication = data.publication;
+          setStatus(data.message || "Platform campaign created paused.");
+          const activateButton = node("button", "button small", "Activate " + label + " · starts spend");
+          activateButton.type = "button";
+          activateButton.addEventListener("click", async () => {
+            const confirmed = confirm("This will activate the platform campaign and can spend " + publication.budget_amount + " " + publication.currency + " per day. Continue?");
+            if (!confirmed) return;
+            const typedBudget = prompt("To confirm, type the daily budget exactly: " + publication.budget_amount);
+            if (typedBudget !== String(publication.budget_amount)) {
+              setStatus("Activation cancelled because the budget confirmation did not match.");
+              return;
+            }
+            activateButton.disabled = true;
+            try {
+              const activated = await request("/api/publish/" + platform + "/" + encodeURIComponent(publication.id) + "/activate", {
+                method: "POST", body: JSON.stringify({ confirmSpend: true, dailyBudgetConfirmed: Number(typedBudget) })
+              });
+              setStatus(activated.message || "Campaign activated.");
+              activateButton.textContent = "Campaign active";
+            } catch (error) {
+              setStatus(error.message);
+              activateButton.disabled = false;
+            }
+          });
+          campaignActions.append(activateButton);
+        } catch (error) {
+          setStatus(error.message);
+        } finally {
+          createButton.disabled = false;
+        }
+      });
+      campaignActions.append(createButton);
+    }
+    addPausedPublishControl("meta", "Meta");
+    addPausedPublishControl("google", "Google Search");
+
     campaignActions.append(statusSelect, saveStatus);
     addCard("Campaign controls · " + campaign.id, campaignActions);
   }
