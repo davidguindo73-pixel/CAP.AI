@@ -99,6 +99,7 @@ router.get("/platform/status", async (_req, res, next) => {
       businessProfiles: Boolean(pool),
       tokenVault: Boolean(process.env.CAP_TOKEN_ENCRYPTION_KEY),
       aiStrategy: Boolean(process.env.OPENAI_API_KEY),
+      imageGeneration: Boolean(process.env.OPENAI_API_KEY),
       mediaServerCredential: Boolean(process.env.HF_API_KEY && process.env.CAP_API_ACCESS_TOKEN),
       integrations: {
         meta: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && (process.env.META_GRAPH_API_VERSION || "v27.0")),
