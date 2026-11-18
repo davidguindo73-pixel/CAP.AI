@@ -7,3 +7,29 @@
 .hero h1,.prose h2,.panel h2{ text-wrap:balance }
 .card:hover,.panel:hover{border-color:#52525b;transition:border-color .2s ease}
 ::selection{background:#e5e7eb;color:#080808}
+
+/* CAP.AI welcoming refresh — keep Inter and Space Grotesk typography. */
+:root{--lime:#55735f;--lime-dim:#7d9884;--bg:#f4f2ed;--border:#e2e5df;--text:#29332c;--muted:#68746c;--dim:#89918b}
+html,body{background-color:#f4f2ed!important;background-image:radial-gradient(ellipse at 12% 5%,rgba(201,220,207,.72),transparent 35%),radial-gradient(ellipse at 90% 12%,rgba(224,215,239,.62),transparent 32%),radial-gradient(ellipse at 75% 80%,rgba(246,224,204,.55),transparent 36%),linear-gradient(145deg,#f8f7f2,#f0f3ef 55%,#f6f1eb)!important;background-attachment:fixed!important;color:var(--text)!important}
+.topbar,.nav-glass{background:rgba(250,249,246,.84)!important;border-bottom:1px solid rgba(66,78,69,.13)!important;box-shadow:0 8px 28px rgba(43,52,45,.035)}
+.brand,.nav-links a,.footer-links a{color:#354238}.brand-mark,.logo-dot{background:linear-gradient(135deg,#607d6b,#9db8a5)!important;box-shadow:0 0 16px #8aa89455!important}
+.nav-links,.footer-links{color:#68736c!important}.nav-links .active,.nav-links a:hover,.footer-links a:hover{color:#456451!important}
+.button,.btn-lime{background:linear-gradient(135deg,#354d40,#617b69)!important;color:#fff!important;border:1px solid #526b5a!important;box-shadow:0 8px 22px rgba(59,82,67,.13)}
+.button.secondary,.btn-ghost{background:rgba(255,255,255,.7)!important;color:#39463e!important;border:1px solid #d8ded7!important}
+.kicker,.lime,.text-lime{color:#567360!important}.hero h1,.ws-hero h1,.ads-hero h1,.panel h2,.ws-panel h2,.ads-panel h2{color:#252e28!important}
+.hero p.lead,.ws-hero p,.ads-hero p{color:#66716a!important}
+.panel,.card,.ws-panel,.ads-panel,.feature-card,.price-card,.stat,.step,.value-card,.creator-hero{background:rgba(255,255,255,.78)!important;border:1px solid rgba(91,110,97,.17)!important;box-shadow:0 16px 42px rgba(53,65,56,.055),inset 0 1px 0 rgba(255,255,255,.9)!important;color:#303a33!important;backdrop-filter:blur(12px)}
+.card:hover,.panel:hover,.feature-card:hover{border-color:#c5d2c8!important}
+.field label,.ws-field label,.ads-field label{color:#46534a!important}
+.field input,.field select,.field textarea,.ws-field input,.ws-field select,.ws-field textarea,.ads-field input,.ads-field select,.ads-field textarea{background:rgba(255,255,255,.94)!important;color:#29332c!important;border:1px solid #dce2db!important}
+.field input::placeholder,.field textarea::placeholder,.ws-field input::placeholder,.ads-field input::placeholder{color:#9aa39c!important}
+.output,.preview-frame,.saved-item,.prompt-snippet,.prompt-mock{background:rgba(246,247,243,.95)!important;color:#3b463e!important;border-color:#dce3dc!important}
+.tag,.notice,.example-type{background:rgba(239,244,239,.92)!important;color:#526458!important;border-color:#dce4dc!important}
+.notice{background:rgba(255,255,255,.76)!important;color:#59655d!important}.notice strong{color:#3f614b!important}
+.footer{background:rgba(247,246,241,.78)!important;border-top:1px solid #e3e1d9!important}
+.footer-note,.muted,.dim,.prose p,.prose li,.article p,.example-body p{color:#6d7770!important}
+hr{border-color:#e2e5df!important}.icon-tile,.feature-icon{background:linear-gradient(145deg,#edf3ed,#e4ece6)!important;border-color:#d5e1d7!important;color:#54705d!important}
+.toast{background:#fff!important;color:#303a33!important;border-color:#dfe5df!important;box-shadow:0 12px 36px #293b2d1a!important}
+.example-image{background:#e7ebe6!important}.prose h2,.article h2,.example-body h2,.value-card h2{color:#2c352f!important}
+.prompt-snippet{color:#4f5c53!important}::selection{background:#d7e5d9!important;color:#26372c!important}
+::-webkit-scrollbar-track{background:#eeeee8}::-webkit-scrollbar-thumb{background:#c6d1c7}
