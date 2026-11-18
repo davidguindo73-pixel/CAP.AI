@@ -427,5 +427,25 @@
     }
   });
 
+  async function prefillBusinessProfile() {
+    if (!sessionStorage.getItem("capAiAccessTokenV1")) return;
+    try {
+      const data = await request("/api/business-profile");
+      const profile = data.profile;
+      if (!profile) return;
+      const set = (id, value) => { const field = $(id); if (field && value && !field.value) field.value = value; };
+      set("businessName", profile.businessName);
+      set("website", profile.website);
+      set("businessDescription", profile.description);
+      set("location", profile.location);
+      set("productOrService", (profile.products || [])[0]);
+      set("tone", profile.brandVoice);
+      const industry = $("businessType");
+      if (industry && profile.industry && [...industry.options].some((option) => option.value === profile.industry || option.text === profile.industry)) industry.value = profile.industry;
+      setStatus("Loaded your saved business profile. Adjust the brief for this campaign.");
+    } catch { /* Profile prefill is optional; Ad Studio still works with a manual brief. */ }
+  }
+
   checkBackend();
+  prefillBusinessProfile();
 })();
