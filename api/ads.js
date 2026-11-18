@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { ensureAdsSchema, pool } from "./db.js";
+import { resolveUserFromRequest } from "./platform.js";
 
 const router = express.Router();
 const memoryCampaigns = new Map();
@@ -127,22 +128,27 @@ function safeEqual(leftValue, rightValue) {
   return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-function requireAdsAccess(req, _res, next) {
+async function requireAdsAccess(req, _res, next) {
   try {
+    const user = await resolveUserFromRequest(req);
+    if (user) {
+      req.capUser = user;
+      req.capOwnerHash = crypto.createHash("sha256").update("user:" + user.id).digest("hex");
+      return next();
+    }
+
     const expectedToken = process.env.CAP_ADS_ACCESS_TOKEN;
     if (!expectedToken) {
-      throw httpError(503, "CAP.AI Ads is not configured yet. Set CAP_ADS_ACCESS_TOKEN on the backend.");
+      throw httpError(503, "Sign in to CAP.AI or configure the private beta access token.");
     }
     if (!safeEqual(req.get("X-CAP-Ads-Token"), expectedToken)) {
-      throw httpError(401, "The private CAP.AI Ads access token is missing or invalid.");
+      throw httpError(401, "Sign in or enter a valid private beta access token.");
     }
 
     const clientId = String(req.get("X-CAP-Client-ID") || "");
     if (!/^[a-zA-Z0-9_-]{16,100}$/.test(clientId)) {
       throw httpError(400, "A valid CAP.AI browser session ID is required.");
     }
-
-    // This is a beta workspace boundary, not a replacement for real account authentication.
     req.capOwnerHash = crypto.createHash("sha256").update(clientId).digest("hex");
     next();
   } catch (error) {
