@@ -448,6 +448,242 @@ router.get("/analytics/:platform", requireUser, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+
+async function ownedCampaign(userId, campaignId) {
+  if (!/^[0-9a-f-]{36}$/i.test(campaignId)) throw fail(400, "Campaign ID is invalid.");
+  const ownerHash = hash("user:" + userId);
+  const result = await pool.query(
+    "SELECT id, title, status, brief, deliverables FROM cap_ad_campaigns WHERE id=$1 AND owner_hash=$2",
+    [campaignId, ownerHash]
+  );
+  if (!result.rowCount) throw fail(404, "Campaign not found in this customer workspace.");
+  if (result.rows[0].status !== "approved") throw fail(409, "Approve this campaign in Ad Studio before preparing a platform draft.");
+  return result.rows[0];
+}
+function validateLaunchInput(body) {
+  const accountId = String(body?.accountId || "").replace(/^act_/, "").replace(/-/g, "");
+  const dailyBudget = Number(body?.dailyBudget);
+  const destinationUrl = String(body?.destinationUrl || "").trim();
+  const countryCode = String(body?.countryCode || "US").trim().toUpperCase();
+  if (!/^\d{5,30}$/.test(accountId)) throw fail(400, "Choose a valid advertising account ID.");
+  if (!Number.isFinite(dailyBudget) || dailyBudget < 1 || dailyBudget > 5000) throw fail(400, "Set a daily budget between 1 and 5,000 in the account currency.");
+  if (!/^https:\/\//i.test(destinationUrl)) throw fail(400, "Enter a public HTTPS destination URL.");
+  if (!/^[A-Z]{2}$/.test(countryCode)) throw fail(400, "Enter a two-letter country code for campaign targeting.");
+  return { accountId, dailyBudget, destinationUrl, countryCode };
+}
+async function googleMutate(customerId, resource, accessToken, operations) {
+  if (!process.env.GOOGLE_ADS_DEVELOPER_TOKEN) throw fail(503, "Google Ads API developer token is not configured.");
+  const headers = {
+    Authorization: "Bearer " + accessToken,
+    "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+    "Content-Type": "application/json"
+  };
+  if (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) headers["login-customer-id"] = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID.replace(/-/g, "");
+  const data = await remoteJson(
+    "https://googleads.googleapis.com/" + (process.env.GOOGLE_ADS_API_VERSION || "v26") + "/customers/" + customerId + "/" + resource + ":mutate",
+    { method: "POST", headers, body: JSON.stringify({ operations }) }
+  );
+  const name = data.results?.[0]?.resourceName;
+  if (!name) throw fail(502, "Google Ads did not return a resource ID for the prepared campaign.");
+  return name;
+}
+router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next) => {
+  try {
+    const platform = String(req.params.platform || "").toLowerCase();
+    if (!["meta", "google"].includes(platform)) throw fail(501, "CAP.AI's paused campaign builder is not enabled for this platform yet.");
+    await ensureSaasSchema();
+    const campaign = await ownedCampaign(req.capUser.id, req.params.campaignId);
+    const input = validateLaunchInput(req.body || {});
+    const connection = await getConnection(req.capUser.id, platform);
+    const accessToken = await accessTokenFor(connection, platform);
+    let campaignResource, adsetResource, adResource, creativeResource = null;
+    const brief = campaign.brief || {};
+    const deliverables = campaign.deliverables || {};
+    if (platform === "meta") {
+      const version = process.env.META_GRAPH_API_VERSION;
+      const accounts = await remoteJson("https://graph.facebook.com/" + version + "/me/adaccounts?fields=id,currency&limit=100&access_token=" + encodeURIComponent(accessToken));
+      const chosen = (accounts.data || []).find((item) => String(item.id).replace(/^act_/, "") === input.accountId);
+      if (!chosen) throw fail(403, "That Meta ad account is not accessible through the connected account.");
+      const pageId = String(req.body?.pageId || "").replace(/[^0-9]/g, "");
+      const imageUrl = String(req.body?.imageUrl || "").trim();
+      if (!pageId) throw fail(400, "Meta campaigns require a Facebook Page ID with ad permissions.");
+      if (!/^https:\/\//i.test(imageUrl)) throw fail(400, "Meta campaigns require a public HTTPS image URL for the ad creative.");
+      const metaCopy = deliverables.adCopies?.meta || {};
+      const suffix = Date.now().toString();
+      const accountPath = "act_" + input.accountId;
+      const form = async (path, payload) => remoteJson("https://graph.facebook.com/" + version + "/" + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ ...payload, access_token: accessToken })
+      });
+      const campaignResult = await form(accountPath + "/campaigns", {
+        name: (campaign.title || brief.businessName || "CAP.AI campaign").slice(0, 180) + " " + suffix,
+        objective: "OUTCOME_TRAFFIC",
+        status: "PAUSED",
+        special_ad_categories: "[]",
+        buying_type: "AUCTION"
+      });
+      campaignResource = campaignResult.id;
+      const targeting = {
+        geo_locations: { countries: [input.countryCode] },
+        publisher_platforms: ["facebook", "instagram"]
+      };
+      const adsetResult = await form(accountPath + "/adsets", {
+        name: "CAP.AI traffic ad set " + suffix,
+        campaign_id: campaignResource,
+        daily_budget: String(Math.round(input.dailyBudget * 100)),
+        billing_event: "IMPRESSIONS",
+        optimization_goal: "LINK_CLICKS",
+        bid_strategy: "LOWEST_COST_WITHOUT_CAP",
+        targeting: JSON.stringify(targeting),
+        status: "PAUSED"
+      });
+      adsetResource = adsetResult.id;
+      const story = {
+        page_id: pageId,
+        link_data: {
+          link: input.destinationUrl,
+          picture: imageUrl,
+          message: String(metaCopy.primaryText || brief.businessDescription || "").slice(0, 2000),
+          name: String(metaCopy.headline || campaign.title || "Learn more").slice(0, 255),
+          description: String(metaCopy.description || "").slice(0, 255),
+          call_to_action: { type: "LEARN_MORE", value: { link: input.destinationUrl } }
+        }
+      };
+      const creativeResult = await form(accountPath + "/adcreatives", {
+        name: "CAP.AI creative " + suffix,
+        object_story_spec: JSON.stringify(story)
+      });
+      creativeResource = creativeResult.id;
+      const adResult = await form(accountPath + "/ads", {
+        name: (campaign.title || "CAP.AI ad").slice(0, 180) + " " + suffix,
+        adset_id: adsetResource,
+        creative: JSON.stringify({ creative_id: creativeResource }),
+        status: "PAUSED"
+      });
+      adResource = adResult.id;
+    } else {
+      const customerId = input.accountId;
+      const googleCopy = deliverables.adCopies?.googleSearch || {};
+      const headlines = [...new Set([...(googleCopy.headlines || []), campaign.title || brief.businessName || "Learn more"])]
+        .map((value) => String(value).trim().slice(0, 30)).filter(Boolean).slice(0, 15);
+      const descriptions = [...new Set([...(googleCopy.descriptions || []), brief.businessDescription || "Learn more about our products and services."])]
+        .map((value) => String(value).trim().slice(0, 90)).filter(Boolean).slice(0, 4);
+      while (headlines.length < 3) headlines.push(String(brief.businessName || "Explore our services").slice(0, 30));
+      while (descriptions.length < 2) descriptions.push("Visit our website to learn more.");
+      const budgetResource = await googleMutate(customerId, "campaignBudgets", accessToken, [{
+        create: {
+          name: "CAP.AI budget " + Date.now(),
+          amountMicros: String(Math.round(input.dailyBudget * 1000000)),
+          deliveryMethod: "STANDARD",
+          explicitlyShared: false
+        }
+      }]);
+      campaignResource = await googleMutate(customerId, "campaigns", accessToken, [{
+        create: {
+          name: String(campaign.title || brief.businessName || "CAP.AI campaign").slice(0, 128) + " " + Date.now(),
+          advertisingChannelType: "SEARCH",
+          status: "PAUSED",
+          campaignBudget: budgetResource,
+          manualCpc: {},
+          networkSettings: {
+            targetGoogleSearch: true,
+            targetSearchNetwork: true,
+            targetContentNetwork: false,
+            targetPartnerSearchNetwork: false
+          }
+        }
+      }]);
+      adsetResource = await googleMutate(customerId, "adGroups", accessToken, [{
+        create: {
+          name: "CAP.AI search ad group",
+          campaign: campaignResource,
+          status: "PAUSED",
+          type: "SEARCH_STANDARD",
+          cpcBidMicros: "1000000"
+        }
+      }]);
+      const keywordIdeas = [...new Set((googleCopy.keywordIdeas || []).map((value) => String(value).trim()).filter(Boolean))].slice(0, 10);
+      if (keywordIdeas.length) {
+        const keywordOperations = keywordIdeas.map((word) => ({
+          create: { adGroup: adsetResource, status: "ENABLED", keyword: { text: word.slice(0, 80), matchType: "BROAD" } }
+        }));
+        await googleMutate(customerId, "adGroupCriteria", accessToken, keywordOperations);
+      }
+      adResource = await googleMutate(customerId, "adGroupAds", accessToken, [{
+        create: {
+          adGroup: adsetResource,
+          status: "PAUSED",
+          ad: {
+            finalUrls: [input.destinationUrl],
+            responsiveSearchAd: {
+              headlines: headlines.map((text) => ({ text })),
+              descriptions: descriptions.map((text) => ({ text }))
+            }
+          }
+        }
+      }]);
+    }
+    const publication = await pool.query(
+      "INSERT INTO cap_platform_publications (user_id,campaign_id,platform,external_campaign_id,external_adset_id,external_ad_id,status,budget_amount,currency,destination_url,provider_response) VALUES ($1,$2,$3,$4,$5,$6,'paused',$7,$8,$9,$10::jsonb) RETURNING id,status,external_campaign_id,external_adset_id,external_ad_id,budget_amount,currency",
+      [req.capUser.id, campaign.id, platform, campaignResource, adsetResource, adResource, input.dailyBudget, platform === "meta" ? (req.body.currency || "USD") : "USD", input.destinationUrl, JSON.stringify({ creativeId: creativeResource })]
+    );
+    res.status(201).json({
+      publication: publication.rows[0],
+      message: "The platform campaign, ad group and ad were created paused. They cannot spend until you explicitly activate them with the exact daily budget confirmation."
+    });
+  } catch (error) { next(error); }
+});
+router.post("/publish/:platform/:publicationId/activate", requireUser, async (req, res, next) => {
+  try {
+    const platform = String(req.params.platform || "").toLowerCase();
+    if (!["meta", "google"].includes(platform)) throw fail(501, "Campaign activation is not enabled for this platform yet.");
+    if (req.body?.confirmSpend !== true) throw fail(400, "Explicitly confirm that you want this campaign to start spending.");
+    const result = await pool.query(
+      "SELECT * FROM cap_platform_publications WHERE id=$1 AND user_id=$2 AND platform=$3",
+      [req.params.publicationId, req.capUser.id, platform]
+    );
+    if (!result.rowCount) throw fail(404, "Paused campaign not found.");
+    const publication = result.rows[0];
+    if (publication.status === "active") throw fail(409, "This campaign is already active.");
+    if (Number(req.body?.dailyBudgetConfirmed) !== Number(publication.budget_amount)) {
+      throw fail(400, "The confirmed daily budget must exactly match the paused campaign budget (" + publication.budget_amount + " " + publication.currency + ").");
+    }
+    const connection = await getConnection(req.capUser.id, platform);
+    const accessToken = await accessTokenFor(connection, platform);
+    if (platform === "meta") {
+      const version = process.env.META_GRAPH_API_VERSION;
+      const postStatus = async (id) => remoteJson("https://graph.facebook.com/" + version + "/" + id, {
+        method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ status: "ACTIVE", access_token: accessToken })
+      });
+      await postStatus(publication.external_ad_id);
+      await postStatus(publication.external_adset_id);
+      await postStatus(publication.external_campaign_id);
+    } else {
+      const customerId = publication.external_campaign_id.split("/")[1];
+      const update = async (resource, resourceName) => googleMutate(customerId, resource, accessToken, [{
+        update: { resourceName, status: "ENABLED" }, updateMask: "status"
+      }]);
+      await update("adGroupAds", publication.external_ad_id);
+      await update("adGroups", publication.external_adset_id);
+      await update("campaigns", publication.external_campaign_id);
+    }
+    await pool.query("UPDATE cap_platform_publications SET status='active',updated_at=NOW() WHERE id=$1 AND user_id=$2", [publication.id, req.capUser.id]);
+    res.json({ ok: true, status: "active", message: "The campaign was activated in the connected advertising account." });
+  } catch (error) { next(error); }
+});
+router.get("/publish/:campaignId", requireUser, async (req, res, next) => {
+  try {
+    const campaign = await ownedCampaign(req.capUser.id, req.params.campaignId);
+    const result = await pool.query(
+      "SELECT id,platform,external_campaign_id,status,budget_amount,currency,destination_url,created_at FROM cap_platform_publications WHERE user_id=$1 AND campaign_id=$2 ORDER BY created_at DESC",
+      [req.capUser.id, campaign.id]
+    );
+    res.json({ publications: result.rows });
+  } catch (error) { next(error); }
+});
+
 router.get("/billing/plans", (_req, res) => {
   res.json({ plans: [
     { id: "starter", name: "Starter", configured: Boolean(process.env.STRIPE_PRICE_ID_STARTER) },
