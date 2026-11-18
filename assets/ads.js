@@ -5,42 +5,28 @@
   const form = $("campaignForm");
   const output = $("campaignOutput");
   const list = $("campaignList");
-  const tokenInput = $("adsToken");
-  const baseInput = $("apiBase");
+
   const submitButton = $("generateCampaign");
   const statusLine = $("formStatus");
-  const clientKey = "capAiClientIdV1";
-  const baseKey = "capAiAdsBaseV1";
-  let token = "";
+  const API_BASE = "https://cap-ai-generation-api.onrender.com";
+  const TOKEN_KEY = "capAiAccessTokenV1";
   let campaigns = [];
 
-  let clientId = localStorage.getItem(clientKey);
-  if (!clientId) {
-    clientId = crypto.randomUUID
-      ? crypto.randomUUID()
-      : "cap_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    localStorage.setItem(clientKey, clientId);
-  }
-
-  baseInput.value = localStorage.getItem(baseKey) || "https://cap-ai-generation-api.onrender.com";
-
   function apiBase() {
-    return baseInput.value.trim().replace(/\/+$/, "");
+    return API_BASE;
   }
 
   function authHeaders() {
     const headers = {
       "Content-Type": "application/json",
-      "X-CAP-Client-ID": clientId,
-      "X-CAP-Ads-Token": token
     };
-    const customerToken = sessionStorage.getItem("capAiAccessTokenV1");
+    const customerToken = sessionStorage.getItem(TOKEN_KEY);
     if (customerToken) headers.Authorization = "Bearer " + customerToken;
     return headers;
   }
 
   function hasAdsAccess() {
-    return Boolean(token || sessionStorage.getItem("capAiAccessTokenV1"));
+    return Boolean(sessionStorage.getItem(TOKEN_KEY));
   }
 
   function setStatus(message) {
@@ -239,7 +225,7 @@
     });
 
     function addPausedPublishControl(platform, label) {
-      if (!sessionStorage.getItem("capAiAccessTokenV1")) return;
+      if (!sessionStorage.getItem(TOKEN_KEY)) return;
       const createButton = node("button", "button secondary small", "Create " + label + " paused");
       createButton.type = "button";
       createButton.addEventListener("click", async () => {
@@ -342,8 +328,8 @@
   }
 
   async function loadCampaigns(updateStatus = true) {
-    if (!token) {
-      if (updateStatus) setStatus("Enter the private beta access token first.");
+    if (!hasAdsAccess()) {
+      if (updateStatus) setStatus("Please sign in to your CAP.AI account first.");
       return;
     }
     const data = await request("/api/ads/campaigns");
@@ -366,29 +352,15 @@
     }
   }
 
-  tokenInput.addEventListener("input", () => {
-    token = tokenInput.value.trim();
-    if (token.length >= 20) {
-      loadCampaigns().catch((error) => setStatus(error.message));
-    }
-  });
-
-  baseInput.addEventListener("change", () => {
-    localStorage.setItem(baseKey, apiBase());
-    checkBackend();
-  });
-
   $("loadCampaigns").addEventListener("click", () => {
-    token = tokenInput.value.trim();
     loadCampaigns().catch((error) => setStatus(error.message));
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    token = tokenInput.value.trim();
-    if (token.length < 20) {
-      setStatus("Enter the private beta access token from the Render Environment page.");
-      tokenInput.focus();
+    if (!hasAdsAccess()) {
+      setStatus("Please sign in to your CAP.AI account first. Opening Workspace…");
+      window.location.href = "workspace.html?next=ads.html";
       return;
     }
     if (!form.reportValidity()) return;
