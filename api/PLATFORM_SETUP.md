@@ -36,8 +36,8 @@ Set these Render variables:
 - META_APP_ID
 - META_APP_SECRET
 - META_REDIRECT_URI (the exact callback above)
-- META_GRAPH_API_VERSION (a version currently supported by your Meta app)
-- META_OAUTH_SCOPES = ads_read,ads_management,business_management
+- META_GRAPH_API_VERSION = v27.0 (or another version currently supported by your app)
+- META_OAUTH_SCOPES = ads_read,ads_management,business_management,pages_show_list,pages_read_engagement
 
 Request only the permissions needed for the product and complete Meta App Review / Marketing API access requirements. The account owner must grant CAP.AI access to the relevant ad account and Facebook Page.
 
@@ -60,7 +60,7 @@ Set:
 
 The OAuth flow requests offline access to the Google Ads scope so the backend can refresh access tokens. Google Ads API requests also require the developer token and may be subject to API access-level restrictions and review. Connect a Google account that can access the customer accounts to manage.
 
-For publishing, approve the campaign first. Supply an accessible customer ID, public HTTPS landing page, country code and daily budget in that account's currency. CAP.AI creates the budget, Search campaign, ad group, keywords and responsive search ad in PAUSED state. To enable it, the user must separately confirm the exact daily budget. Review the finished campaign in Google Ads before enabling spend.
+For publishing, approve the campaign first. Supply the accessible 10-digit customer ID, public HTTPS landing page, country code and daily budget in that account's currency. CAP.AI resolves the actual account currency and adds the country as a campaign location target. CAP.AI creates the budget, Search campaign, ad group, keywords and responsive search ad in PAUSED state. To enable it, the user must separately confirm the exact daily budget. Review the finished campaign in Google Ads before enabling spend.
 
 ## TikTok For Business
 
