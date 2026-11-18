@@ -98,6 +98,8 @@ router.get("/platform/status", async (_req, res, next) => {
       auth: Boolean(pool),
       businessProfiles: Boolean(pool),
       tokenVault: Boolean(process.env.CAP_TOKEN_ENCRYPTION_KEY),
+      aiStrategy: Boolean(process.env.OPENAI_API_KEY),
+      mediaServerCredential: Boolean(process.env.HF_API_KEY && process.env.CAP_API_ACCESS_TOKEN),
       integrations: {
         meta: Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET && process.env.META_REDIRECT_URI && (process.env.META_GRAPH_API_VERSION || "v27.0")),
         google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REDIRECT_URI && process.env.GOOGLE_ADS_DEVELOPER_TOKEN),
