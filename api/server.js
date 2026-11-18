@@ -35,8 +35,7 @@ app.use(rateLimit({
   message: { error: "Too many requests. Please wait a minute and try again." }
 }));
 
-// This map stores only request metadata and a one-way owner hash, never a provider API key.
-// It is intentionally in-memory for the prototype; deploy a database + authenticated accounts for production.
+// Media-generation job metadata is in memory. Move it to a durable queue before public production use.
 const jobs = new Map();
 const JOB_TTL_MS = 24 * 60 * 60 * 1000;
 setInterval(() => {
