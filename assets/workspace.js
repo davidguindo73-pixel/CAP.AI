@@ -79,7 +79,7 @@ $("authMode").addEventListener("click",()=>authMode(mode==="login"?"register":"l
 $("authForm").addEventListener("submit",async event=>{
  event.preventDefault();const body=Object.fromEntries(new FormData(event.currentTarget).entries()),path=mode==="register"?"/api/auth/register":"/api/auth/login";
  $("authSubmit").disabled=true;msg("authMessage",mode==="register"?"Creating account…":"Signing in…");
- try{const d=await api(path,{method:"POST",body:JSON.stringify(body)},false);sessionStorage.setItem(TOKEN_KEY,d.token);sessionStorage.setItem(USER_KEY,JSON.stringify(d.user));signedIn(d.user);msg("authMessage","Account ready.");await Promise.all([loadProfile(),loadConnections(),loadBilling()]);}
+ try{const d=await api(path,{method:"POST",body:JSON.stringify(body)},false);sessionStorage.setItem(TOKEN_KEY,d.token);sessionStorage.setItem(USER_KEY,JSON.stringify(d.user));signedIn(d.user);msg("authMessage","Account ready.");await Promise.all([loadProfile(),loadConnections(),loadBilling()]);const next=new URLSearchParams(location.search).get("next");if(next==="ads.html")location.href="ads.html";}
  catch(e){msg("authMessage",e.message);}finally{$("authSubmit").disabled=false;}
 });
 $("signOut").addEventListener("click",async()=>{try{await api("/api/auth/logout",{method:"POST"});}catch{}sessionStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(USER_KEY);signedOut();msg("authMessage","You are signed out.");});
