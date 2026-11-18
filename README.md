@@ -9,14 +9,16 @@ CAP.AI is an early-stage creative platform for turning ideas into prompts and AI
 ## Website
 
 - Home: https://davidguindo73-pixel.github.io/CAP.AI/
-- Create AI: https://davidguindo73-pixel.github.io/CAP.AI/create.html\n- Advertising Studio (private beta): https://davidguindo73-pixel.github.io/CAP.AI/ads.html
+- Create AI: https://davidguindo73-pixel.github.io/CAP.AI/create.html
+- Advertising Studio (private beta): https://davidguindo73-pixel.github.io/CAP.AI/ads.html
 - Examples: https://davidguindo73-pixel.github.io/CAP.AI/examples.html
 - Prompt Lab: https://davidguindo73-pixel.github.io/CAP.AI/studio.html
 
 ## Feature slice added
 
 - AI advertising strategy from a business brief: positioning, target audience, campaign concepts, ad copy for Meta/TikTok/Google Search/LinkedIn, image/video creative prompts, KPIs and claim-review notes.
-- Advertising Studio dashboard for business briefs, campaign output, platform-specific ad copy, creative concepts and campaign history.\n- Campaign workspace API with draft/approved/archived states and PostgreSQL persistence.
+- Advertising Studio dashboard for business briefs, campaign output, platform-specific ad copy, creative concepts and campaign history.
+- Campaign workspace API with draft/approved/archived states and PostgreSQL persistence.
 - Text-to-image generation through a campaign-image model.
 - Text-to-video generation with Seedance 2.0, Kling 3.0 Standard/Pro/4K, and Kling 3.0 Turbo options, including duration, aspect ratio, resolution, audio and multi-shot settings.
 - Reference image/video upload using provider-signed uploads; Wan 3.0 and Kling 3.0 image-to-video; Kling O3 video edits for an uploaded clip.
