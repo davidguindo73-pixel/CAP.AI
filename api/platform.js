@@ -300,7 +300,7 @@ async function finishOAuth(platform, code, state) {
     const data = tokenData.data || tokenData;
     const accessToken = data.access_token;
     if (!accessToken) throw fail(502, "TikTok did not return an advertiser access token.");
-    await saveConnection({ userId, platform, remoteUserId: String(data.advertiser_id || "tiktok-advertiser"), accountName: "TikTok For Business", accessToken, refreshToken: data.refresh_token, expiresIn: data.expires_in, scopes: ["advertiser_management", "reporting"], metadata: { advertiserIds: data.advertiser_ids || (data.advertiser_id ? [data.advertiser_id] : []) } });
+    await saveConnection({ userId, platform, remoteUserId: String(data.advertiser_id || "tiktok-advertiser"), accountName: "TikTok For Business", accessToken, refreshToken: data.refresh_token, expiresIn: null, scopes: ["advertiser_management", "reporting"], metadata: { advertiserIds: data.advertiser_ids || (data.advertiser_id ? [data.advertiser_id] : []) } });
   }
 }
 router.get("/integrations", requireUser, async (req, res, next) => {
