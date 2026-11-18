@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import adsRouter from "./ads.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
@@ -21,7 +22,7 @@ app.use(cors({
     return callback(new Error("This website origin is not allowed by CAP.AI API CORS settings."));
   },
   methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-HF-API-Key", "X-CAP-Access-Token", "X-CAP-Client-ID"],
+  allowedHeaders: ["Content-Type", "X-HF-API-Key", "X-CAP-Access-Token", "X-CAP-Client-ID", "X-CAP-Ads-Token"],
   maxAge: 600
 }));
 app.use(express.json({ limit: "1mb" }));
@@ -160,6 +161,8 @@ function readInput(body) {
   if (mode !== "image-to-video" && videoModel === "wan") videoModel = "seedance";
   return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind, videoModel, multiShots };
 }
+app.use("/api/ads", adsRouter);
+
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
