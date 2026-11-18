@@ -216,17 +216,95 @@ $("checkConnection").addEventListener("click",checkConnection);
 async function uploadReference(file){const signResponse=await fetch(base()+"/api/uploads/signed-url",{method:"POST",headers:clientHeaders(),body:JSON.stringify({contentType:file.type})});const signed=await parseResponse(signResponse);const uploaded=await fetch(signed.uploadUrl,{method:"PUT",headers:signed.uploadHeaders||{},body:file,credentials:"omit"});if(!uploaded.ok)throw new Error("Reference upload failed. Check the provider's file-upload access.");return signed.publicUrl}
 function renderMedia(items){const output=$("output");output.replaceChildren();if(!items?.length){output.innerHTML="<div><strong>Job completed, but no media URL was returned.</strong><p class='small'>Check the provider request status and model response.</p></div>";return}const stack=document.createElement("div");stack.className="output-stack";items.forEach(item=>{const card=document.createElement("div");card.className="output-card";let media;if(item.type==="video"){media=document.createElement("video");media.controls=true;media.playsInline=true}else{media=document.createElement("img");media.alt="Generated image result";media.loading="lazy"}media.src=item.url;const action=document.createElement("div");action.className="row spread";action.style.marginTop="9px";const label=document.createElement("span");label.className="small dim";label.textContent=item.type==="video"?"Generated video":"Generated image";const link=document.createElement("a");link.className="button secondary small";link.href=item.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="Open / download ↗";action.append(label,link);card.append(media,action);stack.append(card)});output.append(stack)}
 async function pollJob(jobId){activeJob=jobId;$("progress").hidden=false;$("generate").disabled=true;const deadline=Date.now()+15*60*1000;while(Date.now()<deadline){if(!activeJob)throw new Error("Polling stopped.");$("jobStatus").textContent="Waiting for the model to finish…";await new Promise(resolve=>{pollTimer=setTimeout(resolve,4000)});if(!activeJob)throw new Error("Polling stopped.");const response=await fetch(base()+"/api/jobs/"+encodeURIComponent(jobId),{headers:clientHeaders()});const data=await parseResponse(response);$("jobStatus").textContent="Provider status: "+data.status+".";if(data.status==="completed"){renderMedia(data.media||[]);setResult("Generation completed. Your result is returned from the model provider.");return}if(["failed","nsfw","canceled"].includes(data.status))throw new Error(data.error||"Generation "+data.status+".")}throw new Error("This page stopped waiting after 15 minutes. The provider job may still be processing; try checking again later.")}
-$("generate").addEventListener("click",async()=>{if(requestBusy)return;requestBusy=true;$("generate").disabled=true;try{if(!base())throw new Error("Enter the deployed CAP.AI API URL in the Connection panel.");localStorage.setItem(baseKey,base());let prompt=buildPrompt();const file=form.reference.files?.[0];const mode=form.mode.value;if(["image-to-video","video-restyle"].includes(mode)&&!file)throw new Error("Select a reference image or video for this workflow.");if(mode==="image-to-video"&&file&&!file.type.startsWith("image/"))throw new Error("Image-to-video needs an image. Choose Reference Video / Restyle for a video file.");if(mode==="video-restyle"&&file&&!file.type.startsWith("video/"))throw new Error("Reference Video / Restyle needs a video file.");if(file&&["image","ad-image"].includes(mode)&&!file.type.startsWith("image/"))throw new Error("Image workflows require an image reference.");if(!form.hfKey.value.trim()&&!form.appToken.value)throw new Error("Enter your provider API key, or the private CAP.AI access token configured by the site owner.");
-$("output").innerHTML="<div><strong>Preparing your request…</strong><p class='small'>A reference may need to upload before generation.</p></div>";$("progress").hidden=false;$("jobStatus").textContent="Preparing request…";setResult("Generation submitted when the provider accepts the request.");
-let referenceUrls=[];let referenceKind="image";if(file){$("jobStatus").textContent="Uploading reference securely…";const url=await uploadReference(file);referenceUrls=[url];referenceKind=file.type.startsWith("video/")?"video":"image"}
-const payload={mode,prompt,aspectRatio:form.ratio.value,resolution:form.resolution.value,duration:Number(form.duration.value),quality:form.quality.value,generateAudio:form.audio.value==="true",videoModel:form.videoModel.value,multiShots:form.shotMode.value==="multi",referenceUrls,referenceKind};
-$("jobStatus").textContent="Submitting to model provider…";const response=await fetch(base()+"/api/generate",{method:"POST",headers:clientHeaders(),body:JSON.stringify(payload)});const data=await parseResponse(response);await pollJob(data.jobId);
-}catch(error){if(error.message==="Polling stopped."){setResult("Polling stopped; provider cancellation was requested.");$("output").innerHTML="<div><strong>Generation stopped</strong><p class='small'>The provider cancellation request was sent.</p></div>";}else{setResult(error.message||"Generation failed.");$("output").innerHTML="<div><strong>Could not complete generation</strong><p class='small'>"+escapeText(error.message||"Unknown error")+"</p></div>";}}
-finally{activeJob=null;$("progress").hidden=true;$("generate").disabled=false;requestBusy=false;clearTimeout(pollTimer)}});
+$("generate").addEventListener("click",async()=>{
+ if(requestBusy)return;
+ requestBusy=true;
+ $("generate").disabled=true;
+ try{
+  if(!base())throw new Error("CAP.AI API URL is missing. Refresh the page and check the Connection panel.");
+  localStorage.setItem(baseKey,base());
+  const prompt=buildPrompt();
+  const file=form.reference.files?.[0];
+  const mode=form.mode.value;
+  const isImage=["image","ad-image"].includes(mode);
+  if(["image-to-video","video-restyle"].includes(mode)&&!file)throw new Error("Select a reference image or video for this workflow.");
+  if(mode==="image-to-video"&&file&&!file.type.startsWith("image/"))throw new Error("Image-to-video needs an image. Choose Reference Video / Restyle for a video file.");
+  if(mode==="video-restyle"&&file&&!file.type.startsWith("video/"))throw new Error("Reference Video / Restyle needs a video file.");
+  if(file&&isImage&&!file.type.startsWith("image/"))throw new Error("Image workflows require an image reference.");
+  const customerToken=sessionStorage.getItem("capAiAccessTokenV1");
+  const canUseServerImage=Boolean(customerToken||form.betaToken.value.trim()||form.appToken.value.trim());
+  const useCapImageEngine=isImage&&!form.hfKey.value.trim()&&!file;
+
+  if(useCapImageEngine){
+   if(!canUseServerImage)throw new Error("Sign in to your CAP.AI Workspace or enter the private beta access token in the Connection panel to generate an image.");
+   $("output").innerHTML="<div><strong>Creating your visual…</strong><p class='small'>CAP.AI Image Generator is preparing your image.</p></div>";
+   $("progress").hidden=false;
+   $("jobStatus").textContent="Generating image with CAP.AI…";
+   setResult("Image request sent to the CAP.AI Image Generator.");
+   const response=await fetch(base()+"/api/images/generate",{
+    method:"POST",
+    headers:clientHeaders(),
+    body:JSON.stringify({
+     prompt,
+     model:form.imageModel.value,
+     aspectRatio:form.ratio.value,
+     quality:form.quality.value,
+     outputFormat:"png",
+     background:"auto"
+    })
+   });
+   const data=await parseResponse(response);
+   renderMedia([{url:data.imageDataUrl,type:"image"}]);
+   setResult("Image created · "+data.model+" · "+data.size+" · "+data.quality+" quality.");
+   return;
+  }
+
+  if(isImage&&file&&!form.hfKey.value.trim())throw new Error("Reference-image editing is not enabled in the CAP.AI Image Generator yet. Remove the reference image to create from text, or enter a Higgsfield API key to use its reference workflow.");
+  if(!form.hfKey.value.trim()&&!form.appToken.value)throw new Error("For video and reference workflows, enter your Higgsfield API key or the server access token configured by the owner.");
+
+  $("output").innerHTML="<div><strong>Preparing your request…</strong><p class='small'>A reference may need to upload before generation.</p></div>";
+  $("progress").hidden=false;
+  $("jobStatus").textContent="Preparing request…";
+  setResult("Generation submitted when the provider accepts the request.");
+  let referenceUrls=[];
+  let referenceKind="image";
+  if(file){
+   $("jobStatus").textContent="Uploading reference securely…";
+   const url=await uploadReference(file);
+   referenceUrls=[url];
+   referenceKind=file.type.startsWith("video/")?"video":"image";
+  }
+  const payload={
+   mode,prompt,aspectRatio:form.ratio.value,resolution:form.resolution.value,
+   duration:Number(form.duration.value),quality:form.quality.value,
+   generateAudio:form.audio.value==="true",videoModel:form.videoModel.value,
+   multiShots:form.shotMode.value==="multi",referenceUrls,referenceKind
+  };
+  $("jobStatus").textContent="Submitting to Higgsfield…";
+  const response=await fetch(base()+"/api/generate",{method:"POST",headers:clientHeaders(),body:JSON.stringify(payload)});
+  const data=await parseResponse(response);
+  await pollJob(data.jobId);
+ }catch(error){
+  if(error.message==="Polling stopped."){
+   setResult("Polling stopped; provider cancellation was requested.");
+   $("output").innerHTML="<div><strong>Generation stopped</strong><p class='small'>The provider cancellation request was sent.</p></div>";
+  }else{
+   setResult(error.message||"Generation failed.");
+   $("output").innerHTML="<div><strong>Could not complete generation</strong><p class='small'>"+escapeText(error.message||"Unknown error")+"</p></div>";
+  }
+ }finally{
+  activeJob=null;
+  $("progress").hidden=true;
+  $("generate").disabled=false;
+  requestBusy=false;
+  clearTimeout(pollTimer);
+ }
+});
 $("cancel").addEventListener("click",async()=>{if(!activeJob)return;const id=activeJob;try{await fetch(base()+"/api/jobs/"+encodeURIComponent(id)+"/cancel",{method:"POST",headers:clientHeaders(),body:"{}"});activeJob=null;setResult("Cancellation requested. Stopping the status poll shortly.")}catch(e){setResult("Could not cancel this job: "+e.message)}});
 $("buildPrompt").addEventListener("click",()=>{try{const prompt=buildPrompt();$("output").innerHTML="<div style='text-align:left;width:100%'><strong>Built prompt — not rendered</strong><pre id='promptText' style='white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;font:13px/1.6 ui-monospace,monospace;color:#d4d4d4'></pre><button class='button secondary small' id='copyBuilt' type='button'>Copy prompt</button></div>";$("promptText").textContent=prompt;document.getElementById("copyBuilt").onclick=async()=>{try{await navigator.clipboard.writeText(prompt);setResult("Prompt copied.")}catch{setResult("Select the prompt text and copy manually.")}};setResult("Prompt prepared. Click Generate media to render it.")}catch(e){setResult(e.message)}});
 function escapeText(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 $("reset").addEventListener("click",()=>{if(requestBusy){setResult("Wait for the current job or cancel it before resetting.");return}form.idea.value="";form.avoid.value="";form.reference.value="";$("referencePreview").replaceChildren();$("output").innerHTML="<div><strong>Your result will appear here</strong><p class='small'>Connect the API, write a brief and select Generate media.</p></div>";$("charCount").textContent="0 / 5000";setResult("New brief ready.")});
+checkConnection();
 })();
 </script>
 </body></html>
