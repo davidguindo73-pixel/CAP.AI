@@ -44,7 +44,7 @@ Authentication uses a 12-hour server-side session. The browser sends the returne
 - `GET /api/integrations` — connected platform list and configuration readiness.
 - `GET /api/integrations/:platform/connect` — begin Meta, Google or TikTok authorization.
 - `GET /api/integrations/:platform/callback` — OAuth/advertiser callback.
-- `GET /api/integrations/:platform/accounts` — accessible account discovery.
+- `GET /api/integrations/:platform/accounts` — accessible account discovery.\n- `GET /api/integrations/meta/pages` — connected Facebook Pages and Page-level advertising task status.
 - `DELETE /api/integrations/:platform` — remove locally stored connection.
 - `GET /api/analytics/:platform?accountId=...` — last-30-day report.
 
