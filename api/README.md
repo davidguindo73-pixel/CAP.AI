@@ -1,107 +1,95 @@
-# CAP.AI Advertising + Media API
+# CAP.AI API
 
-CAP.AI is moving from a prompt/media prototype toward an AI advertising studio. This backend now has two connected parts:
+CAP.AI runs a Node 20+ Express API on Render. It currently groups four backend areas:
 
-1. **Advertising strategy** — turns a business brief into campaign positioning, platform-specific ad copy, creative concepts, image/video prompts, measurement ideas and claim-review notes.
-2. **Media generation gateway** — keeps the existing Higgsfield image/video generation routes so a reviewed creative prompt can be rendered as an image or video.
+1. Customer accounts and business profiles.
+2. Advertising account integrations, encrypted credential storage and reporting.
+3. Campaign strategy, private-beta campaign workspaces and paused Meta/Google publishing.
+4. Media generation through the configured Higgsfield gateway.
 
-CAP.AI does not train its own foundation image/video model. Text strategy is generated through the OpenAI Responses API; media rendering is handled by the configured Higgsfield models.
+## Deployment
 
-## Deploy on Render
+The Render service runs from this directory with `npm install` and `npm start`. The service health check is `GET /api/health`.
 
-The repository's `render.yaml` configures a Node web service with `api` as its root directory, `npm install` as the build command, and `npm start` as the start command. Use Node 20 or newer.
+PostgreSQL is required for customer registration, sessions, business profiles, OAuth states, connected accounts, subscription state and publishing records. The schema is initialized on first use through `api/db.js`.
 
-Set these secrets in the Render service's Environment panel:
+## Environment
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `OPENAI_API_KEY` | For Ads strategy | Server-side API key for ad strategy and copy generation. |
-| `CAP_ADS_ACCESS_TOKEN` | For Ads strategy | Long random private beta token protecting the new Ads endpoints. |
-| `OPENAI_AD_MODEL` | Optional | Defaults to `gpt-4.1-mini`; set to a model enabled for your API account. |
-| `DATABASE_URL` | Recommended | PostgreSQL connection string for persistent campaign workspaces. |
-| `DATABASE_SSL` | Optional | Defaults to SSL enabled; set to `false` only for a trusted local database. |
-| `HF_API_KEY` | For server-key media mode | Optional server-side Higgsfield key. Never use this shared-key mode on a public site without real user authentication and quotas. |
-| `CAP_API_ACCESS_TOKEN` | With `HF_API_KEY` | Required private token when using the server-side Higgsfield key. |
-| `CORS_ORIGINS` | Yes | Comma-separated exact origins for the frontend. |
+See [PLATFORM_SETUP.md](./PLATFORM_SETUP.md) for exact provider callback URLs and configuration steps. The key-free template is [`.env.example`](./.env.example).
 
-Do not commit real API keys or tokens. Do not put `OPENAI_API_KEY`, `CAP_ADS_ACCESS_TOKEN`, `HF_API_KEY` or `CAP_API_ACCESS_TOKEN` into GitHub Pages HTML or browser JavaScript.
+Core settings:
+- `DATABASE_URL` — persistent Render PostgreSQL connection.
+- `CAP_TOKEN_ENCRYPTION_KEY` — 32-byte AES-256 key (hex or base64) used to encrypt provider tokens at rest.
+- `CAP_FRONTEND_URL` and `CORS_ORIGINS` — customer UI origin.
+- `OPENAI_API_KEY` / `OPENAI_AD_MODEL` — campaign-strategy generation.
+- `CAP_ADS_ACCESS_TOKEN` — optional owner-only private-beta fallback.
+- Meta, Google Ads and TikTok app credentials and callback variables.
+- Stripe secret, webhook secret and recurring Price IDs.
+- Existing Higgsfield BYOK or server-key settings for image/video generation.
 
-## Advertising API
+Never commit actual credentials, and never put provider keys into browser JavaScript.
 
-The private beta requests use both headers:
+## Customer API
 
-- `X-CAP-Client-ID`: browser workspace identifier (16–100 letters, numbers, underscores or hyphens).
-- `X-CAP-Ads-Token`: the private beta token configured as `CAP_ADS_ACCESS_TOKEN`.
+Authentication uses a 12-hour server-side session. The browser sends the returned token as `Authorization: Bearer ...`. Session token hashes are stored in PostgreSQL; the raw token is returned only at login/register.
 
-### Check capabilities
+- `POST /api/auth/register` — create account (name, email, password; password minimum 12 characters).
+- `POST /api/auth/login` — sign in.
+- `GET /api/auth/me` — current authenticated user.
+- `POST /api/auth/logout` — revoke current session.
+- `GET /api/business-profile`, `PUT /api/business-profile` — per-customer profile.
 
-`GET /api/ads/capabilities`
+## Advertising account integrations
 
-Returns whether the strategy engine is configured, whether PostgreSQL is configured, and which platforms are supported. It does not expose secrets.
+- `GET /api/integrations` — connected platform list and configuration readiness.
+- `GET /api/integrations/:platform/connect` — begin Meta, Google or TikTok authorization.
+- `GET /api/integrations/:platform/callback` — OAuth/advertiser callback.
+- `GET /api/integrations/:platform/accounts` — accessible account discovery.
+- `DELETE /api/integrations/:platform` — remove locally stored connection.
+- `GET /api/analytics/:platform?accountId=...` — last-30-day report.
 
-### Create a campaign brief
+Customer provider access/refresh tokens are stored encrypted using AES-256-GCM. The raw tokens are not returned to the client. If the encryption key is missing or invalid, the API refuses to store new provider credentials.
 
-`POST /api/ads/brief`
+## Campaigns and publishing
 
-Example JSON body:
+The existing Ad Studio endpoints remain available:
+- `GET /api/ads/capabilities`
+- `POST /api/ads/brief`
+- `GET /api/ads/campaigns`
+- `GET /api/ads/campaigns/:id`
+- `PATCH /api/ads/campaigns/:id`
+- `DELETE /api/ads/campaigns/:id`
 
-```json
-{
-  "businessName": "Northside Coffee",
-  "businessType": "Coffee shop",
-  "businessDescription": "Independent neighborhood cafe serving espresso and pastries.",
-  "website": "https://example.com",
-  "location": "Oakland, California",
-  "productOrService": "Coffee, breakfast and pastries",
-  "differentiator": "Locally owned neighborhood cafe",
-  "offer": "No offer supplied",
-  "campaignGoal": "Increase local awareness and in-store visits",
-  "targetAudience": "People who live or work nearby",
-  "budget": "$300 test budget",
-  "tone": "Warm, modern and community-focused",
-  "callToAction": "Visit us",
-  "platforms": ["Instagram", "Facebook", "TikTok", "Google Search"]
-}
-```
+An authenticated customer owns an isolated campaign workspace. The private-beta token remains available as an owner-only fallback.
 
-The route creates a campaign containing:
-- Campaign positioning, audience and core message.
-- Two or three creative directions.
-- Platform-ready Meta, TikTok, Google Search and LinkedIn copy.
-- Image and video prompts that can be sent to the existing `POST /api/generate` media endpoint.
-- Suggested KPIs and a small testing plan.
-- Claims and details that a human should verify before publishing.
+Publishing requires the campaign status to be `approved` in Ad Studio and a connected provider account:
+- `POST /api/publish/meta/:campaignId` — create Meta campaign/ad set/creative/ad in PAUSED state. Requires account ID, Page ID, HTTPS image URL, HTTPS destination URL, country code and daily budget.
+- `POST /api/publish/google/:campaignId` — create a Google Search budget, campaign, ad group, keywords and responsive search ad in PAUSED state. Requires customer ID, HTTPS destination URL, country code and daily budget in the account currency.
+- `GET /api/publish/:campaignId` — list platform publications.
+- `POST /api/publish/:platform/:publicationId/activate` — activate a paused Meta/Google campaign only when the user sets `confirmSpend: true` and supplies the exact saved `dailyBudgetConfirmed`.
 
-The endpoint is rate-limited to five requests per minute per IP. Campaign copy is a draft: review it for accuracy, platform rules and local advertising requirements before use.
+All initial platform objects are created paused. The user must review the campaign inside the platform and explicitly activate it; activation can spend the customer's advertising budget. TikTok publishing is not enabled in this release.
 
-### Campaign workspace
+## Billing
 
-- `GET /api/ads/campaigns` — list up to 50 campaigns for this beta browser workspace.
-- `GET /api/ads/campaigns/:id` — read a campaign.
-- `PATCH /api/ads/campaigns/:id` — change `status` to `draft`, `approved` or `archived`, and/or save internal `notes`.
-- `DELETE /api/ads/campaigns/:id` — delete a campaign.
+- `GET /api/billing/plans`
+- `POST /api/billing/checkout`
+- `POST /api/billing/portal`
+- `GET /api/billing/status`
+- `POST /api/billing/webhook`
 
-When `DATABASE_URL` is configured, the API creates the `cap_ad_campaigns` table automatically and stores campaigns in PostgreSQL. Without it, campaign data uses temporary process memory and disappears when the server restarts. Use PostgreSQL before relying on saved work.
+Stripe Checkout and the customer portal remain unavailable until the owner configures secret keys, the webhook signing secret and the recurring Price IDs. The webhook validates the Stripe signature before updating subscription state.
 
-## Existing media generation API
+## Media generation API
 
-- `GET /api/health` — basic service health.
-- `POST /api/uploads/signed-url` — obtain provider-signed upload URLs for reference images/videos.
-- `POST /api/generate` — submit image or video generation.
-- `GET /api/jobs/:jobId` — poll job status and media URLs.
-- `POST /api/jobs/:jobId/cancel` — request cancellation.
+- `GET /api/health`
+- `POST /api/uploads/signed-url`
+- `POST /api/generate`
+- `GET /api/jobs/:jobId`
+- `POST /api/jobs/:jobId/cancel`
 
-The media gateway retains its current Higgsfield model routing. Check the connected provider account for current model availability, supported parameters, credits and pricing.
+The media gateway currently keeps job ownership in process memory. A persistent queue, durable result metadata and secure asset retention/deletion are required before public production use.
 
-## Important: private beta, not public SaaS yet
+## Production readiness
 
-The Ads endpoints currently use a single private beta access token and a browser-generated workspace ID. That is suitable only for controlled testing. It is **not customer authentication** and does not securely identify paying businesses. Do not publish the beta token in the static website.
-
-Before accepting public customers, add:
-- Real user registration/login and server-verified account identity.
-- Per-user campaign ownership, quotas, billing and provider spend limits.
-- Persistent media/job queue storage and secure asset storage with retention/deletion controls.
-- Campaign publishing integrations (Meta, Google, TikTok) with OAuth permissions and explicit user approval.
-- Stronger abuse prevention, monitoring, secret-redacted logs, customer support and reviewed privacy/terms policies.
-
-The current backend creates strategy, copy and creative direction; it does not place ad spend, launch live ads or guarantee campaign results.
+The system is a private-beta foundation and must not be represented as fully audited production SaaS yet. Email verification, password reset, account deletion/export, quotas and usage metering, customer billing enforcement, persistent media jobs, TikTok campaign publishing, idempotent publish reconciliation, test-account verification, monitoring, incident response and privacy/terms review remain to be completed. Complete provider app reviews and test every API path using dedicated sandbox/test ad accounts before enabling live customer traffic.
