@@ -29,11 +29,18 @@
   }
 
   function authHeaders() {
-    return {
+    const headers = {
       "Content-Type": "application/json",
       "X-CAP-Client-ID": clientId,
       "X-CAP-Ads-Token": token
     };
+    const customerToken = sessionStorage.getItem("capAiAccessTokenV1");
+    if (customerToken) headers.Authorization = "Bearer " + customerToken;
+    return headers;
+  }
+
+  function hasAdsAccess() {
+    return Boolean(token || sessionStorage.getItem("capAiAccessTokenV1"));
   }
 
   function setStatus(message) {
