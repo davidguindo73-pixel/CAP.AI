@@ -32,3 +32,7 @@ jobs:
           node --check api/db.js
           node --check assets/ads.js
           node --check assets/workspace.js
+      - name: Check Create AI inline script
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const html = fs.readFileSync('create.html', 'utf8'); const scripts = [...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].map((match) => match[1]); if (!scripts.length) throw new Error('No inline Create AI script found'); fs.writeFileSync('/tmp/create-ai-inline.js', scripts.join('\\n'));"
+          node --check /tmp/create-ai-inline.js
