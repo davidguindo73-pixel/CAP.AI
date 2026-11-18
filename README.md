@@ -19,7 +19,7 @@ CAP.AI is an AI advertising and creative workspace. A business can save its bran
 - Encrypted-at-rest provider tokens using AES-256-GCM.
 - OAuth / advertiser authorization flows for Meta, Google Ads and TikTok For Business.
 - Account discovery and last-30-day reporting endpoints for connected ad accounts.
-- AI campaign strategy, creative concepts and platform copy from a business brief.
+- AI campaign strategy, creative concepts and platform copy from a business brief.\n- Text-to-image creation in Create AI through the server-side GPT Image API, with portrait, landscape and square formats.
 - Campaign draft storage in PostgreSQL, with an owner-only private beta fallback.
 - Paused campaign creation for Meta and Google Search from approved campaign drafts.
 - A second explicit confirmation is required to activate a paused Meta/Google campaign and begin ad spend.
@@ -40,7 +40,7 @@ Detailed owner configuration and platform callback steps are in [api/PLATFORM_SE
 
 The source code does not include business platform app credentials. Before a customer can connect Meta, Google or TikTok, the owner must create the corresponding developer apps, add the exact OAuth callback URLs, configure secrets in Render, and complete each platform's required permissions and app review. Secure token storage also requires a persistent `CAP_TOKEN_ENCRYPTION_KEY`.
 
-Campaign strategy requires `OPENAI_API_KEY`. Stripe subscriptions require Stripe secret/webhook keys and configured recurring Price IDs. Google Ads API access also requires its developer token. These settings are intentionally not committed to the repository.
+Campaign strategy and the Create AI image generator require `OPENAI_API_KEY`. Stripe subscriptions require Stripe secret/webhook keys and configured recurring Price IDs. Google Ads API access also requires its developer token. These settings are intentionally not committed to the repository.
 
 ## Launch limitations
 
