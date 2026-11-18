@@ -174,7 +174,7 @@
 (()=>{
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
-const form={mode:$("mode"),idea:$("idea"),avoid:$("avoid"),style:$("style"),ratio:$("ratio"),camera:$("camera"),duration:$("duration"),videoModel:$("videoModel"),shotMode:$("shotMode"),resolution:$("resolution"),quality:$("quality"),audio:$("audio"),reference:$("reference"),apiBase:$("apiBase"),hfKey:$("hfKey"),appToken:$("appToken"),productName:$("productName"),targetAudience:$("targetAudience"),keyBenefit:$("keyBenefit"),offer:$("offer"),callToAction:$("callToAction"),adPlatform:$("adPlatform"),brandTone:$("brandTone"),adBrief:$("adBrief")};
+const form={mode:$("mode"),idea:$("idea"),avoid:$("avoid"),style:$("style"),ratio:$("ratio"),camera:$("camera"),duration:$("duration"),videoModel:$("videoModel"),imageModel:$("imageModel"),betaToken:$("betaToken"),shotMode:$("shotMode"),resolution:$("resolution"),quality:$("quality"),audio:$("audio"),reference:$("reference"),apiBase:$("apiBase"),hfKey:$("hfKey"),appToken:$("appToken"),productName:$("productName"),targetAudience:$("targetAudience"),keyBenefit:$("keyBenefit"),offer:$("offer"),callToAction:$("callToAction"),adPlatform:$("adPlatform"),brandTone:$("brandTone"),adBrief:$("adBrief")};
 const clientKey="capAiClientIdV1",baseKey="capAiGenerationBaseV1";
 let clientId=localStorage.getItem(clientKey);
 if(!clientId){clientId=(crypto.randomUUID?crypto.randomUUID():("cap_"+Date.now()+"_"+Math.random().toString(36).slice(2)));localStorage.setItem(clientKey,clientId)}
