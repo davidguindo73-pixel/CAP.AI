@@ -57,7 +57,7 @@
 <div class="kicker">Creative engine · connected model preview</div>
 <h1>Make the idea.<br><span class="lime">Generate the media.</span></h1>
 <p class="lead">Create images, cinematic video clips, image-to-video animations and product-ad concepts in one workspace. Choose a workflow, guide the look, and generate through a connected media model.</p>
-<div class="notice"><strong>Setup required:</strong> CAP.AI's generation gateway must be deployed and connected to a provider account with model access and credits. CAP.AI does not train its own foundation model yet; this prototype connects a real external image/video model. Never commit provider keys to GitHub.</div>
+<div class="notice"><strong>Image creation:</strong> Generate campaign visuals from text using CAP.AI Image Generator. Video and reference-based generation still use the connected Higgsfield provider. Model access and API usage are billed through the configured provider account.</div>
 <div class="badge-row"><span class="pill">Text → Image</span><span class="pill">Text → Video</span><span class="pill">Image → Video</span><span class="pill">Reference Video</span><span class="pill">Product Ads</span></div>
 </section>
 
@@ -68,8 +68,8 @@
 <div class="kicker">01 · Create</div><h2>Creative brief</h2>
 <div class="field"><label for="mode">What are you making?</label>
 <select id="mode">
-<option value="video">Text → Video</option>
-<option value="image">Text → Image</option>
+<option value="image" selected>Text → Image · CAP.AI Image Generator</option>
+<option value="video">Text → Video · Higgsfield</option>
 <option value="image-to-video">Image → Video</option>
 <option value="video-restyle">Reference Video / Restyle</option>
 <option value="ad-video">Product Ad Video</option>
@@ -94,6 +94,7 @@
 </div>
 <div class="field"><label for="avoid">Things to avoid (optional)</label><input id="avoid" maxlength="1000" placeholder="Flicker, warped hands, changing outfit, random text"></div>
 <div class="two-col">
+<div class="field"><label for="imageModel">Image engine</label><select id="imageModel"><option value="gpt-image-2.5-flare">GPT Image Flare · faster</option><option value="gpt-image-2.5-sunburst">GPT Image Sunburst · detail</option></select></div>
 <div class="field"><label for="style">Visual style</label><select id="style">
 <option value="photorealistic, natural texture, realistic lighting">Photorealistic</option>
 <option value="cinematic composition, dramatic lighting, subtle film grain">Cinematic</option>
@@ -131,13 +132,14 @@
 </section>
 
 <section class="panel">
-<div class="kicker">02 · Connection</div><h2>Connect the generation engine</h2>
-<p class="small">Use your deployed CAP.AI API URL. If using your own provider key, enter it here; it is kept only in this page's memory and is not saved to browser storage. HTTPS is recommended outside localhost.</p>
+<div class="kicker">02 · Connection</div><h2>Connect the media engines</h2>
+<p class="small">CAP.AI Image Generator uses the server-side GPT Image engine. Sign in to Workspace or use the private beta token for image generation. Video and reference workflows use Higgsfield; you can enter your own Higgsfield key below. Keys stay only in this page's memory and are never saved to browser storage.</p>
 <div class="field"><label for="apiBase">CAP.AI API base URL</label><input id="apiBase" placeholder="https://your-cap-ai-api.onrender.com"></div>
 <div class="row" style="margin:-2px 0 16px"><a class="button secondary" href="https://render.com/deploy?repo=https://github.com/davidguindo73-pixel/CAP.AI" target="_blank" rel="noopener noreferrer">Deploy API on Render ↗</a><a class="small dim" href="https://open.higgsfield.ai/api-keys" target="_blank" rel="noopener noreferrer">Get provider API key ↗</a></div>
 <div class="two-col">
 <div class="field"><label for="hfKey">Your provider API key (BYOK)</label><input id="hfKey" type="password" autocomplete="off" placeholder="Paste complete key · not saved"></div>
-<div class="field"><label for="appToken">Private CAP.AI access token (only if configured)</label><input id="appToken" type="password" autocomplete="off" placeholder="Optional · not saved"></div>
+<div class="field"><label for="appToken">Private Higgsfield server access token (optional)</label><input id="appToken" type="password" autocomplete="off" placeholder="For shared Higgsfield key · not saved"></div>
+<div class="field"><label for="betaToken">CAP.AI private beta access token (for image generation)</label><input id="betaToken" type="password" autocomplete="off" placeholder="Private beta token from Render · not saved"></div>
 </div>
 <div class="row"><button id="checkConnection" class="button secondary" type="button">Check connection</button><span id="connectionBadge" class="pill">Not checked</span></div>
 <p id="connectionStatus" class="statusline" role="status" aria-live="polite">Deploy the API backend and configure credentials to enable generation.</p>
