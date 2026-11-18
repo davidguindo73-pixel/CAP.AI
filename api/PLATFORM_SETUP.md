@@ -21,6 +21,12 @@ CAP_TOKEN_ENCRYPTION_KEY is the application-level AES-256-GCM key for customer a
 
 The customer database schema is created automatically on first use. PostgreSQL is required for registration, login, customer sessions, business profiles, connected accounts and billing. Do not rely on the temporary in-memory campaign store for customers.
 
+## CAP.AI Image Generator
+
+The Create AI page defaults to image generation through OpenAI's GPT Image API. In Render, configure `OPENAI_API_KEY` with an API key from a project that has access to GPT Image models. CAP.AI uses `gpt-image-2.5-flare` as the fast default and `gpt-image-2.5-sunburst` for more detail. The app sends image requests from the backend, keeps the key server-side, and returns the generated image to the signed-in or private-beta user. OpenAI may require organization verification before GPT Image models are available. The Create AI page uses the deployed Render API URL automatically.
+
+The private-beta image route accepts a valid CAP.AI customer session or a configured beta/server access token. Keep the generated Render token private. Image requests are rate-limited to 12 per hour per IP in this preview; usage costs are billed to the OpenAI API project attached to `OPENAI_API_KEY`.
+
 ## Customer authentication and business profiles
 
 Open the Customer Workspace, create an account with a password of at least 12 characters, then save the business profile. Authenticated campaign requests use a short-lived session token held in the current browser tab's session storage; users must sign in again after the tab session ends. Password reset, email verification and account deletion workflows still need to be added before a public launch.
