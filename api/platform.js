@@ -539,16 +539,18 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
       const chosen = (accounts.data || []).find((item) => String(item.id).replace(/^act_/, "") === input.accountId);
       if (!chosen) throw fail(403, "That Meta ad account is not accessible through the connected account.");
       const pageId = String(req.body?.pageId || "").replace(/[^0-9]/g, "");
+      const selectedPage = (connection.metadata?.pages || []).find((page) => String(page.id) === pageId);
+      if (!pageId || !selectedPage) throw fail(400, "Load your Facebook Pages in Workspace and select one before creating a Meta ad.");
+      const pageAccessToken = decrypt(selectedPage.accessTokenEnc) || accessToken;
       const imageUrl = String(req.body?.imageUrl || "").trim();
-      if (!pageId) throw fail(400, "Meta campaigns require a Facebook Page ID with ad permissions.");
       if (!/^https:\/\//i.test(imageUrl)) throw fail(400, "Meta campaigns require a public HTTPS image URL for the ad creative.");
       const metaCopy = deliverables.adCopies?.meta || {};
       const suffix = Date.now().toString();
       const accountPath = "act_" + input.accountId;
-      const form = async (path, payload) => remoteJson("https://graph.facebook.com/" + version + "/" + path, {
+      const form = async (path, payload, credential = accessToken) => remoteJson("https://graph.facebook.com/" + version + "/" + path, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ ...payload, access_token: accessToken })
+        body: new URLSearchParams({ ...payload, access_token: credential })
       });
       const campaignResult = await form(accountPath + "/campaigns", {
         name: (campaign.title || brief.businessName || "CAP.AI campaign").slice(0, 180) + " " + suffix,
@@ -588,7 +590,7 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
       const creativeResult = await form(accountPath + "/adcreatives", {
         name: "CAP.AI creative " + suffix,
         object_story_spec: JSON.stringify(story)
-      });
+      }, pageAccessToken);
       creativeResource = creativeResult.id;
       const adResult = await form(accountPath + "/ads", {
         name: (campaign.title || "CAP.AI ad").slice(0, 180) + " " + suffix,
