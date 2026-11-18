@@ -412,6 +412,26 @@ router.get("/integrations/:platform/accounts", requireUser, async (req, res, nex
     res.json({ platform, accounts });
   } catch (error) { next(error); }
 });
+router.get("/integrations/meta/pages", requireUser, async (req, res, next) => {
+  try {
+    await ensureSaasSchema();
+    const connection = await getConnection(req.capUser.id, "meta");
+    const accessToken = await accessTokenFor(connection, "meta");
+    const version = (process.env.META_GRAPH_API_VERSION || "v27.0");
+    const data = await remoteJson("https://graph.facebook.com/" + version + "/me/accounts?fields=id,name,access_token,tasks&limit=100&access_token=" + encodeURIComponent(accessToken));
+    const pages = (data.data || []).map((page) => ({
+      id: String(page.id),
+      name: String(page.name || "Facebook Page"),
+      accessTokenEnc: page.access_token ? encrypt(page.access_token) : null,
+      tasks: Array.isArray(page.tasks) ? page.tasks : []
+    }));
+    await pool.query(
+      "UPDATE cap_connected_accounts SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('pages', $1::jsonb), updated_at=NOW() WHERE id=$2",
+      [JSON.stringify(pages), connection.id]
+    );
+    res.json({ pages: pages.map(({ id, name, tasks }) => ({ id, name, tasks })) });
+  } catch (error) { next(error); }
+});
 router.delete("/integrations/:platform", requireUser, async (req, res, next) => {
   try {
     const platform = String(req.params.platform || "").toLowerCase();
