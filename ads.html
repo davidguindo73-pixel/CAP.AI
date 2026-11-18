@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Plan and build AI-powered advertising campaigns with CAP.AI.">
+<meta name="theme-color" content="#050505">
+<title>Advertising Studio · CAP.AI</title>
+<link rel="icon" href="assets/cap-ai-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.ads-hero{padding:46px 0 22px}.ads-hero h1{font-size:clamp(38px,6vw,64px);line-height:1.02;letter-spacing:-.065em;margin:12px 0}.ads-hero p{max-width:760px;color:var(--muted)}
+.ads-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.88fr);gap:18px;align-items:start}
+.ads-panel{background:#0b0b0b;border:1px solid var(--border);border-radius:18px;padding:22px}
+.ads-panel h2{font-size:23px;letter-spacing:-.04em;margin:5px 0 17px}
+.ads-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ads-field{display:grid;gap:6px;margin:0 0 13px}
+.ads-field label{font-size:12px;color:#d2d2d2;font-weight:600}
+.ads-field input,.ads-field textarea,.ads-field select{width:100%;color:#f5f5f5;background:#111;border:1px solid #343434;border-radius:10px;padding:11px 12px;outline:none}
+.ads-field textarea{min-height:80px;resize:vertical}
+.ads-field input:focus,.ads-field textarea:focus,.ads-field select:focus{border-color:#cfcfcf}
+.ads-note{font-size:12px;line-height:1.55;color:#a5a5a5}
+.ads-inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ads-status{display:inline-flex;align-items:center;gap:7px;border:1px solid #353535;background:#101010;border-radius:999px;padding:6px 11px;font-size:12px;color:#bcbcbc}
+.ads-status:before{content:"";width:7px;height:7px;border-radius:50%;background:#777}
+.ads-status.ok:before{background:#c6ff3d}
+.ads-status.bad:before{background:#ff7373}
+.ads-results{display:grid;gap:13px}
+.ads-result-card{border:1px solid #303030;background:#080808;border-radius:13px;padding:15px}
+.ads-result-card h3{font-size:16px;margin:0 0 7px}
+.ads-result-card p{white-space:pre-wrap;color:#d1d1d1;margin:0 0 10px;font-size:13px}
+.ads-result-card .muted{color:#999}
+.ads-chips{display:flex;gap:7px;flex-wrap:wrap}
+.ads-chip{font-size:11px;color:#c5c5c5;border:1px solid #353535;border-radius:999px;padding:4px 8px}
+.ads-list{display:grid;gap:8px}
+.ads-campaign{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #2c2c2c;border-radius:11px;padding:11px;background:#090909}
+.ads-campaign button{background:none;border:0;color:#f4f4f4;text-align:left;cursor:pointer}
+.ads-campaign small{display:block;color:#999}
+.ads-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}
+.ads-brief-grid div{font-size:12px;color:#b9b9b9}.ads-brief-grid strong{display:block;color:#eee;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.ads-empty{border:1px dashed #383838;border-radius:12px;padding:26px;text-align:center;color:#999;font-size:13px}
+.ads-platforms{display:flex;gap:8px 15px;flex-wrap:wrap;margin:6px 0 16px}
+.ads-platforms label{font-size:12px;color:#ddd;display:flex;gap:6px;align-items:center}
+.ads-platforms input{accent-color:#eee}
+.ads-divider{height:1px;background:#262626;margin:16px 0}
+@media(max-width:900px){.ads-layout{grid-template-columns:1fr}}
+@media(max-width:560px){.ads-grid,.ads-brief-grid{grid-template-columns:1fr}.ads-panel{padding:16px}.ads-campaign{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="shell nav">
+<a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a>
+<nav class="nav-links" aria-label="Main navigation">
+<a href="index.html">Home</a><a href="create.html">Create AI</a><a href="ads.html" class="active">Ad Studio</a><a href="examples.html">Examples</a><a href="studio.html">Prompt Lab</a><a href="account.html">Workspace</a>
+</nav></div></header>
+<main class="shell">
+<section class="ads-hero">
+<div class="kicker">CAP.AI · Advertising studio · Private beta</div>
+<h1>Turn a business into<br><span class="lime">a campaign.</span></h1>
+<p>Build a marketing strategy, platform-ready copy, creative concepts and production prompts from one business brief. Review every deliverable before it goes live.</p>
+<div class="ads-inline"><span id="backendStatus" class="ads-status">Checking backend…</span><span id="storageStatus" class="ads-status">Checking campaign storage…</span></div>
+</section>
+<section class="section" style="padding-top:8px">
+<div class="ads-layout">
+<div class="ads-panel">
+<div class="kicker">01 · Business brief</div><h2>Tell us about the business</h2>
+<form id="campaignForm">
+<div class="ads-grid">
+<div class="ads-field"><label for="businessName">Business name *</label><input id="businessName" name="businessName" required maxlength="120" placeholder="Example: Northside Coffee"></div>
+<div class="ads-field"><label for="businessType">Business type *</label><select id="businessType" name="businessType" required><option value="">Choose an industry</option><option>Restaurant / Cafe</option><option>Retail / Ecommerce</option><option>Beauty / Barber</option><option>Fitness / Wellness</option><option>Real Estate</option><option>Professional Services</option><option>Automotive</option><option>Education</option><option>Technology</option><option>Other local business</option></select></div>
+</div>
+<div class="ads-field"><label for="website">Website (optional)</label><input id="website" name="website" type="url" placeholder="https://yourbusiness.com" maxlength="300"></div>
+<div class="ads-field"><label for="businessDescription">Describe the business *</label><textarea id="businessDescription" name="businessDescription" required maxlength="1200" placeholder="What does the business do? What makes it useful or different?"></textarea></div>
+<div class="ads-grid">
+<div class="ads-field"><label for="productOrService">Product or service *</label><input id="productOrService" name="productOrService" required maxlength="500" placeholder="What are we promoting?"></div>
+<div class="ads-field"><label for="location">Location</label><input id="location" name="location" maxlength="160" placeholder="Oakland, California"></div>
+</div>
+<div class="ads-field"><label for="differentiator">What makes it different?</label><textarea id="differentiator" name="differentiator" maxlength="500" placeholder="A specific strength, experience, or reason to choose this business."></textarea></div>
+<div class="ads-grid">
+<div class="ads-field"><label for="campaignGoal">Campaign goal *</label><select id="campaignGoal" name="campaignGoal" required><option value="">Choose a goal</option><option>Increase local awareness</option><option>Get more website visits</option><option>Generate leads or bookings</option><option>Increase online sales</option><option>Promote a product launch</option><option>Grow social engagement</option></select></div>
+<div class="ads-field"><label for="targetAudience">Target audience *</label><input id="targetAudience" name="targetAudience" required maxlength="500" placeholder="Who should see this ad?"></div>
+</div>
+<div class="ads-grid">
+<div class="ads-field"><label for="offer">Offer or promotion (optional)</label><input id="offer" name="offer" maxlength="400" placeholder="Leave blank if none"></div>
+<div class="ads-field"><label for="budget">Test budget (optional)</label><input id="budget" name="budget" maxlength="100" placeholder="Example: $300 per month"></div>
+</div>
+<div class="ads-grid">
+<div class="ads-field"><label for="tone">Brand tone</label><select id="tone" name="tone"><option>Warm and approachable</option><option>Modern and premium</option><option>Bold and energetic</option><option>Professional and trustworthy</option><option>Playful and creative</option><option>Minimal and direct</option></select></div>
+<div class="ads-field"><label for="callToAction">Preferred call to action</label><select id="callToAction" name="callToAction"><option>Learn more</option><option>Shop now</option><option>Book now</option><option>Visit us</option><option>Get a quote</option><option>Sign up</option><option>Contact us</option></select></div>
+</div>
+<div class="ads-field"><label>Advertising platforms</label>
+<div class="ads-platforms">
+<label><input type="checkbox" name="platforms" value="Instagram" checked> Instagram</label>
+<label><input type="checkbox" name="platforms" value="Facebook" checked> Facebook</label>
+<label><input type="checkbox" name="platforms" value="TikTok" checked> TikTok</label>
+<label><input type="checkbox" name="platforms" value="YouTube"> YouTube</label>
+<label><input type="checkbox" name="platforms" value="Google Search"> Google Search</label>
+<label><input type="checkbox" name="platforms" value="LinkedIn"> LinkedIn</label>
+</div></div>
+<div class="ads-divider"></div>
+<div class="kicker">Private beta connection</div>
+<div class="ads-field"><label for="apiBase">CAP.AI API address</label><input id="apiBase" type="url" value="https://cap-ai-generation-api.onrender.com" autocomplete="url"></div>
+<div class="ads-field"><label for="adsToken">Private beta access token</label><input id="adsToken" type="password" autocomplete="off" placeholder="Paste the token from Render Environment"></div>
+<p class="ads-note">This is an owner-only testing gate, not customer login. The token stays in this page's memory and is not saved to browser storage. Never share it with customers. Business briefs are sent to the configured AI provider and saved in the campaign database.</p>
+<div class="ads-inline" style="margin-top:14px">
+<button id="generateCampaign" class="button" type="submit">Build advertising campaign</button>
+<button id="loadCampaigns" class="button secondary" type="button">Refresh campaigns</button>
+</div>
+<p id="formStatus" class="ads-note" role="status" aria-live="polite" style="margin-top:12px">Enter the private beta token to create and retrieve campaigns.</p>
+</form>
+</div>
+<div class="stack">
+<div class="ads-panel">
+<div class="kicker">02 · Campaign output</div><h2>Your strategy & creative</h2>
+<div id="campaignOutput" class="ads-results"><div class="ads-empty">Your campaign strategy, ad copy and creative directions will appear here.</div></div>
+</div>
+<div class="ads-panel">
+<div class="kicker">03 · Saved campaigns</div><h2>Campaign library</h2>
+<div id="campaignList" class="ads-list"><div class="ads-empty">Connect with the private beta token to load saved campaigns.</div></div>
+</div>
+<div class="ads-panel">
+<div class="kicker">04 · What happens next</div><h2>Review before launch</h2>
+<p class="ads-note">CAP.AI currently creates campaign drafts and creative prompts. It does not place ad spend or publish live campaigns. Verify all claims and business details, then generate the approved creative and publish through the ad platform yourself.</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="footer"><div class="shell"><div class="row spread"><a class="brand" href="index.html"><span class="brand-mark"></span><span>Cap<span class="lime">.</span>AI</span></a><span class="small dim">AI advertising studio · Private beta</span></div><div class="footer-links" style="margin-top:18px"><a href="about.html">About</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="contact.html">Feedback</a></div><p class="footer-note">CAP.AI prepares marketing drafts and AI creative prompts. Advertising performance is not guaranteed. © <span data-year></span> CAP.AI.</p></div></footer>
+<script src="assets/site.js"></script><script src="assets/ads.js"></script>
+</body></html>

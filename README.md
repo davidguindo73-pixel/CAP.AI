@@ -10,11 +10,15 @@ CAP.AI is an early-stage creative platform for turning ideas into prompts and AI
 
 - Home: https://davidguindo73-pixel.github.io/CAP.AI/
 - Create AI: https://davidguindo73-pixel.github.io/CAP.AI/create.html
+- Advertising Studio (private beta): https://davidguindo73-pixel.github.io/CAP.AI/ads.html
 - Examples: https://davidguindo73-pixel.github.io/CAP.AI/examples.html
 - Prompt Lab: https://davidguindo73-pixel.github.io/CAP.AI/studio.html
 
 ## Feature slice added
 
+- AI advertising strategy from a business brief: positioning, target audience, campaign concepts, ad copy for Meta/TikTok/Google Search/LinkedIn, image/video creative prompts, KPIs and claim-review notes.
+- Advertising Studio dashboard for business briefs, campaign output, platform-specific ad copy, creative concepts and campaign history.
+- Campaign workspace API with draft/approved/archived states and PostgreSQL persistence.
 - Text-to-image generation through a campaign-image model.
 - Text-to-video generation with Seedance 2.0, Kling 3.0 Standard/Pro/4K, and Kling 3.0 Turbo options, including duration, aspect ratio, resolution, audio and multi-shot settings.
 - Reference image/video upload using provider-signed uploads; Wan 3.0 and Kling 3.0 image-to-video; Kling O3 video edits for an uploaded clip.
@@ -40,11 +44,11 @@ The GitHub Pages workflow only deploys static files. It does not run Node server
 5. For the initial personal prototype, use the Bring Your Own Key (BYOK) flow: create a provider key at https://open.higgsfield.ai/api-keys and paste it into the password field when using Create AI. It stays in page memory only and is not saved by CAP.AI to browser storage.
 6. If you instead configure a shared provider key on the server, also set a strong CAP_API_ACCESS_TOKEN backend environment variable. Never run a shared-key endpoint for a public audience without real authentication, quotas and abuse protection.
 
-Detailed backend settings are in api/README.md; a safe template is in api/.env.example.
+For AI advertising strategy, add OPENAI_API_KEY and a separate CAP_ADS_ACCESS_TOKEN in Render. Add DATABASE_URL for persistent campaign records. The Ads API and dashboard are gated for private beta testing and are not yet connected to public customer login. The private beta token must be entered manually from Render by the owner and is kept only in page memory. Detailed endpoint and deployment settings are in api/README.md; a safe template is in api/.env.example.
 
 ## Important launch limitations
 
-This is not production SaaS yet. It does not include login, user accounts, persistent project cloud storage, billing/credits, multi-user quota enforcement, background queue persistence or a trained custom model. The API's prototype job ownership map is in memory and resets if the service restarts. Before a public launch, implement authenticated accounts, database-backed job ownership, secure file retention/deletion, spend limits, robust moderation, audit logs with secret redaction, monitoring and reviewed privacy/terms policies.
+This is not production SaaS yet. The advertising strategy and campaign endpoints are private-beta features protected by a shared token plus a browser workspace ID, not customer login. Campaign records use PostgreSQL only when DATABASE_URL is configured; otherwise they are temporary memory. Media-generation job ownership is still in memory and resets if the service restarts. Before a public launch, implement real user authentication, per-account ownership, billing/credits, quota and provider spend enforcement, persistent job queues, secure file retention/deletion, stronger moderation, secret-redacted audit logs, monitoring and reviewed privacy/terms policies.
 
 ## Privacy and secrets
 

@@ -404,6 +404,7 @@
       <a href="examples.html" class="text-sm text-mid hover:text-white transition hidden sm:block">Examples</a>
       <a href="about.html" class="text-sm text-mid hover:text-white transition hidden sm:block">About the creator</a>
       <a href="create.html" class="text-sm text-mid hover:text-white transition hidden sm:block">Create AI</a>
+      <a href="ads.html" class="text-sm text-mid hover:text-white transition hidden sm:block">Ad Studio</a>
       <a href="account.html" class="text-sm text-mid hover:text-white transition hidden sm:block">Workspace</a>
       <a href="create.html" class="btn-lime text-sm !py-2.5 !px-5">Create AI</a>
     </div>
@@ -1072,7 +1073,11 @@
       const medium = capOutput.value === 'video'
         ? 'Create a video with coherent motion, intentional camera movement, consistent subjects, and natural temporal continuity.'
         : 'Create a single image with a clear focal point, balanced composition, and fine detail.';
-      capBuiltPrompt = idea + '\n\nStyle: ' + capStyle.value + '.\n' + medium + '\nAvoid: distorted anatomy, inconsistent details, unreadable text, excessive artifacts.';
+      capBuiltPrompt = idea + '
+
+Style: ' + capStyle.value + '.
+' + medium + '
+Avoid: distorted anatomy, inconsistent details, unreadable text, excessive artifacts.';
       capPromptResult.textContent = capBuiltPrompt;
       capPromptResult.classList.remove('hidden');
       capCopyPrompt.disabled = false;
