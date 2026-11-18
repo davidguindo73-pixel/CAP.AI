@@ -257,7 +257,7 @@
         if (!countryCode) return;
         const payload = { accountId, destinationUrl, dailyBudget: Number(dailyBudget), countryCode };
         if (platform === "meta") {
-          payload.pageId = prompt("Facebook Page ID with ad permissions:");
+          payload.pageId = sessionStorage.getItem("capAiMetaPageId") || prompt("Select a Facebook Page in Workspace first, or enter its Page ID:");
           if (!payload.pageId) return;
           payload.imageUrl = prompt("Public HTTPS URL of the final ad image:");
           if (!payload.imageUrl) return;
