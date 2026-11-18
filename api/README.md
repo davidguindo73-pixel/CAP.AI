@@ -21,7 +21,7 @@ Core settings:
 - `DATABASE_URL` — persistent Render PostgreSQL connection.
 - `CAP_TOKEN_ENCRYPTION_KEY` — 32-byte AES-256 key (hex or base64) used to encrypt provider tokens at rest.
 - `CAP_FRONTEND_URL` and `CORS_ORIGINS` — customer UI origin.
-- `OPENAI_API_KEY` / `OPENAI_AD_MODEL` — campaign-strategy generation.
+- `OPENAI_API_KEY` / `OPENAI_AD_MODEL` — campaign strategy and the GPT Image image generator.
 - `CAP_ADS_ACCESS_TOKEN` — optional owner-only private-beta fallback.
 - Meta, Google Ads and TikTok app credentials and callback variables.
 - Stripe secret, webhook secret and recurring Price IDs.
@@ -83,6 +83,7 @@ Stripe Checkout and the customer portal remain unavailable until the owner confi
 
 ## Media generation API
 
+- `POST /api/images/generate` — secure GPT Image generation for signed-in customers or private-beta users. Uses the server-side `OPENAI_API_KEY`; the browser never receives the key. Supports square, landscape, portrait, quality and PNG/WebP/JPEG output.
 - `GET /api/health`
 - `POST /api/uploads/signed-url`
 - `POST /api/generate`
