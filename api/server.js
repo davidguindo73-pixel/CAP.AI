@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import adsRouter from "./ads.js";
+import platformRouter from "./platform.js";
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
@@ -21,11 +22,11 @@ app.use(cors({
     if (!origin || ALLOWED_ORIGINS.has(origin)) return callback(null, true);
     return callback(new Error("This website origin is not allowed by CAP.AI API CORS settings."));
   },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-HF-API-Key", "X-CAP-Access-Token", "X-CAP-Client-ID", "X-CAP-Ads-Token"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Stripe-Signature", "X-HF-API-Key", "X-CAP-Access-Token", "X-CAP-Client-ID", "X-CAP-Ads-Token"],
   maxAge: 600
 }));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "1mb", verify(req, _res, buffer) { req.rawBody = Buffer.from(buffer); } }));
 app.use(rateLimit({
   windowMs: 60_000,
   limit: 30,
@@ -162,6 +163,7 @@ function readInput(body) {
   return { mode, prompt, refs, ratio, resolution, duration, isVideo, referenceKind, videoModel, multiShots };
 }
 app.use("/api/ads", adsRouter);
+app.use("/api", platformRouter);
 
 app.get("/api/health", (_req, res) => {
   res.json({
@@ -172,7 +174,7 @@ app.get("/api/health", (_req, res) => {
     generationReady: !process.env.HF_API_KEY || Boolean(process.env.CAP_API_ACCESS_TOKEN),
     modes: ["image", "video", "image-to-video", "video-restyle", "ad-image", "ad-video"],
     engines: ["marketing-studio/image", "bytedance/seedance-2.0/text-to-video", "kling-video/v3.0/std/text-to-video", "kling-video/v3.0/pro/text-to-video", "kling-video/v3.0/4k/text-to-video", "kling-video/v3.0-turbo/text-to-video", "kling-video/v3.0/std/image-to-video", "kling-video/v3.0/pro/image-to-video", "kling-video/v3.0/4k/image-to-video", "alibaba/wan-3.0/reference-to-video", "kling-video/o3/video-edit"],
-    note: "Provider account, model access and credits are required. This prototype does not include user accounts or billing."
+    note: "Provider account, model access and credits are required. Customer login, profiles, OAuth connections, analytics and subscription routes are available when their provider settings are configured."
   });
 });
 

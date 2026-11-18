@@ -1,0 +1,33 @@
+name: CAP.AI backend syntax checks
+
+on:
+  push:
+    branches:
+      - feature/full-platform-foundation
+  pull_request:
+    branches:
+      - rebuild/advertising-company-backend
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install backend dependencies
+        working-directory: api
+        run: npm install --no-audit --no-fund
+      - name: Check JavaScript syntax
+        run: |
+          node --check api/server.js
+          node --check api/platform.js
+          node --check api/ads.js
+          node --check api/db.js
+          node --check assets/ads.js
+          node --check assets/workspace.js
