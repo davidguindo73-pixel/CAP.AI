@@ -17,6 +17,8 @@ services:
       - key: OPENAI_AD_MODEL
         value: gpt-4.1-mini
       - key: CAP_ADS_ACCESS_TOKEN
-        sync: false
+        generateValue: true
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: cap-ai-campaigns
+          property: connectionString
