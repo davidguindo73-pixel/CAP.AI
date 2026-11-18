@@ -19,7 +19,8 @@ CAP.AI is an AI advertising and creative workspace. A business can save its bran
 - Encrypted-at-rest provider tokens using AES-256-GCM.
 - OAuth / advertiser authorization flows for Meta, Google Ads and TikTok For Business.
 - Account discovery and last-30-day reporting endpoints for connected ad accounts.
-- AI campaign strategy, creative concepts and platform copy from a business brief.\n- Text-to-image creation in Create AI through the server-side GPT Image API, with portrait, landscape and square formats.
+- AI campaign strategy, creative concepts and platform copy from a business brief.
+- Text-to-image creation in Create AI through the server-side GPT Image API, with portrait, landscape and square formats.
 - Campaign draft storage in PostgreSQL, with an owner-only private beta fallback.
 - Paused campaign creation for Meta and Google Search from approved campaign drafts.
 - A second explicit confirmation is required to activate a paused Meta/Google campaign and begin ad spend.
