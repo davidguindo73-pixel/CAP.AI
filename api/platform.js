@@ -423,13 +423,14 @@ router.get("/integrations/meta/pages", requireUser, async (req, res, next) => {
       id: String(page.id),
       name: String(page.name || "Facebook Page"),
       accessTokenEnc: page.access_token ? encrypt(page.access_token) : null,
-      tasks: Array.isArray(page.tasks) ? page.tasks : []
+      tasks: Array.isArray(page.tasks) ? page.tasks : [],
+      canAdvertise: Array.isArray(page.tasks) ? page.tasks.includes("ADVERTISE") : false
     }));
     await pool.query(
       "UPDATE cap_connected_accounts SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('pages', $1::jsonb), updated_at=NOW() WHERE id=$2",
       [JSON.stringify(pages), connection.id]
     );
-    res.json({ pages: pages.map(({ id, name, tasks }) => ({ id, name, tasks })) });
+    res.json({ pages: pages.map(({ id, name, tasks, canAdvertise }) => ({ id, name, tasks, canAdvertise })) });
   } catch (error) { next(error); }
 });
 router.delete("/integrations/:platform", requireUser, async (req, res, next) => {
@@ -541,6 +542,9 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
       const pageId = String(req.body?.pageId || "").replace(/[^0-9]/g, "");
       const selectedPage = (connection.metadata?.pages || []).find((page) => String(page.id) === pageId);
       if (!pageId || !selectedPage) throw fail(400, "Load your Facebook Pages in Workspace and select one before creating a Meta ad.");
+      if (selectedPage.tasks?.length && !selectedPage.tasks.includes("ADVERTISE")) {
+        throw fail(403, "The selected Facebook Page does not grant the ADVERTISE task to this connection.");
+      }
       const pageAccessToken = decrypt(selectedPage.accessTokenEnc) || accessToken;
       const imageUrl = String(req.body?.imageUrl || "").trim();
       if (!/^https:\/\//i.test(imageUrl)) throw fail(400, "Meta campaigns require a public HTTPS image URL for the ad creative.");
