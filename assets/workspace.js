@@ -53,7 +53,7 @@ async function loadConnections(){
       for(const page of data.pages||[]){
        const row=el("div","ws-row");
        row.append(el("span","",page.name+" · "+page.id+(page.canAdvertise?" · Ads access confirmed":" · ADVERTISE task not confirmed")));
-       const choose=el("button","button secondary","Use this Page for ads");choose.type="button";
+       const choose=el("button","button secondary",page.canAdvertise?"Use this Page for ads":"ADVERTISE access required");choose.type="button";choose.disabled=!page.canAdvertise;
        choose.addEventListener("click",()=>{sessionStorage.setItem("capAiMetaPageId",page.id);msg("integrationMessage","Selected "+page.name+" for Meta ads. Return to Ad Studio to create a paused campaign.");});
        row.append(choose);pagesBox.append(row);
       }
