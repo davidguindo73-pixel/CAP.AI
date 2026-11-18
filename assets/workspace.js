@@ -42,6 +42,27 @@ async function loadConnections(){
      if(list.length){const use=el("button","button secondary","Use first account for analytics");use.type="button";use.addEventListener("click",()=>{$("analyticsPlatform").value=platform;$("analyticsAccount").value=list[0].id;$("analyticsPanel").scrollIntoView({behavior:"smooth"});});actions.append(use);}
     }catch(e){msg("integrationMessage",e.message);}
    });
+   if(platform==="meta"){
+    const pagesButton=el("button","button secondary","Load Pages");pagesButton.type="button";
+    pagesButton.addEventListener("click",async()=>{
+     try{
+      const data=await api("/api/integrations/meta/pages");
+      card.querySelector(".ws-pages")?.remove();
+      const pagesBox=el("div","ws-account ws-pages");
+      if(!(data.pages||[]).length)pagesBox.textContent="No Pages returned. Confirm pages_show_list permission and that this user manages a Facebook Page.";
+      for(const page of data.pages||[]){
+       const row=el("div","ws-row");
+       row.append(el("span","",page.name+" · "+page.id));
+       const choose=el("button","button secondary","Use this Page for ads");choose.type="button";
+       choose.addEventListener("click",()=>{sessionStorage.setItem("capAiMetaPageId",page.id);msg("integrationMessage","Selected "+page.name+" for Meta ads. Return to Ad Studio to create a paused campaign.");});
+       row.append(choose);pagesBox.append(row);
+      }
+      card.append(pagesBox);
+      msg("integrationMessage","Loaded "+(data.pages||[]).length+" Facebook Page(s).");
+     }catch(e){msg("integrationMessage",e.message);}
+    });
+    actions.append(pagesButton);
+   }
    const disconnect=el("button","button secondary","Disconnect");disconnect.type="button";
    disconnect.addEventListener("click",async()=>{if(!confirm("Remove this connection from CAP.AI? Also revoke CAP.AI in the provider's security settings."))return;try{await api("/api/integrations/"+platform,{method:"DELETE"});msg("integrationMessage",labels[platform]+" disconnected.");await loadConnections();}catch(e){msg("integrationMessage",e.message);}});
    actions.append(accounts,disconnect);
