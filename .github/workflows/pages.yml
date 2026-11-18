@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - rebuild/advertising-company-backend
   workflow_dispatch:
 
 permissions:
