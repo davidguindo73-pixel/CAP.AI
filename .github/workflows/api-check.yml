@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/full-platform-foundation
+      - rebuild/advertising-company-backend
   pull_request:
     branches:
       - rebuild/advertising-company-backend
