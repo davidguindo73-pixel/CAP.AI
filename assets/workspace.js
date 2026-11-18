@@ -98,7 +98,7 @@ async function init(){
  if(p.get("connected"))msg("integrationMessage","Connected "+(labels[p.get("connected")]||p.get("connected"))+".");
  if(p.get("connect_error"))msg("integrationMessage","Connection failed: "+p.get("connect_error"));
  if(p.get("billing")==="success")msg("billingStatus","Checkout completed. Waiting for Stripe subscription confirmation.");
- try{const d=await api("/api/platform/status",{},false),ready=Object.entries(d.integrations||{}).filter(([,v])=>v).map(([k])=>k);msg("workspaceStatus","API online · Database "+(d.database?"configured":"not configured")+" · AI strategy "+(d.aiStrategy?"ready":"needs OpenAI API key")+" · Token vault "+(d.tokenVault?"ready":"needs encryption key")+" · Apps: "+(ready.join(", ")||"none configured"));}
+ try{const d=await api("/api/platform/status",{},false),ready=Object.entries(d.integrations||{}).filter(([,v])=>v).map(([k])=>k);msg("workspaceStatus","API online · Database "+(d.database?"configured":"not configured")+" · AI strategy "+(d.aiStrategy?"ready":"needs OpenAI API key")+" · Image generator "+(d.imageGeneration?"ready":"needs OpenAI API key")+" · Token vault "+(d.tokenVault?"ready":"needs encryption key")+" · Apps: "+(ready.join(", ")||"none configured"));}
  catch(e){msg("workspaceStatus","API unavailable: "+e.message);}
  authMode("login");await loadAccount();
 }
