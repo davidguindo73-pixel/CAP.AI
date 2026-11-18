@@ -471,6 +471,20 @@ function validateLaunchInput(body) {
   if (!/^[A-Z]{2}$/.test(countryCode)) throw fail(400, "Enter a two-letter country code for campaign targeting.");
   return { accountId, dailyBudget, destinationUrl, countryCode };
 }
+async function googleSearch(customerId, accessToken, query) {
+  if (!process.env.GOOGLE_ADS_DEVELOPER_TOKEN) throw fail(503, "Google Ads API developer token is not configured.");
+  const headers = {
+    Authorization: "Bearer " + accessToken,
+    "developer-token": process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+    "Content-Type": "application/json"
+  };
+  if (process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID) headers["login-customer-id"] = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID.replace(/-/g, "");
+  const data = await remoteJson(
+    "https://googleads.googleapis.com/" + (process.env.GOOGLE_ADS_API_VERSION || "v26") + "/customers/" + customerId + "/googleAds:search",
+    { method: "POST", headers, body: JSON.stringify({ query }) }
+  );
+  return data.results || [];
+}
 async function googleMutate(customerId, resource, accessToken, operations) {
   if (!process.env.GOOGLE_ADS_DEVELOPER_TOKEN) throw fail(503, "Google Ads API developer token is not configured.");
   const headers = {
@@ -496,7 +510,7 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
     const input = validateLaunchInput(req.body || {});
     const connection = await getConnection(req.capUser.id, platform);
     const accessToken = await accessTokenFor(connection, platform);
-    let campaignResource, adsetResource, adResource, creativeResource = null;
+    let campaignResource, adsetResource, adResource, creativeResource = null, publicationCurrency = "USD";
     const brief = campaign.brief || {};
     const deliverables = campaign.deliverables || {};
     if (platform === "meta") {
@@ -523,7 +537,7 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
         special_ad_categories: "[]",
         buying_type: "AUCTION"
       });
-      campaignResource = campaignResult.id;
+      campaignResource = campaignResult.id;\n      publicationCurrency = chosen.currency || req.body.currency || "USD";
       const targeting = {
         geo_locations: { countries: [input.countryCode] },
         publisher_platforms: ["facebook", "instagram"]
@@ -564,6 +578,15 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
       adResource = adResult.id;
     } else {
       const customerId = input.accountId;
+      const customerRows = await googleSearch(customerId, accessToken, "SELECT customer.currency_code FROM customer LIMIT 1");
+      publicationCurrency = customerRows[0]?.customer?.currencyCode || "USD";
+      const locationRows = await googleSearch(
+        customerId,
+        accessToken,
+        "SELECT geo_target_constant.resource_name, geo_target_constant.name FROM geo_target_constant WHERE geo_target_constant.country_code = '" + input.countryCode + "' AND geo_target_constant.target_type = 'Country' AND geo_target_constant.status = 'ENABLED' LIMIT 1"
+      );
+      const countryTarget = locationRows[0]?.geoTargetConstant?.resourceName;
+      if (!countryTarget) throw fail(400, "Google Ads could not find an enabled country target for " + input.countryCode + ".");
       const googleCopy = deliverables.adCopies?.googleSearch || {};
       const headlines = [...new Set([...(googleCopy.headlines || []), campaign.title || brief.businessName || "Learn more"])]
         .map((value) => String(value).trim().slice(0, 30)).filter(Boolean).slice(0, 15);
@@ -592,6 +615,12 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
             targetContentNetwork: false,
             targetPartnerSearchNetwork: false
           }
+        }
+      }]);
+      await googleMutate(customerId, "campaignCriteria", accessToken, [{
+        create: {
+          campaign: campaignResource,
+          location: { geoTargetConstant: countryTarget }
         }
       }]);
       adsetResource = await googleMutate(customerId, "adGroups", accessToken, [{
@@ -626,7 +655,7 @@ router.post("/publish/:platform/:campaignId", requireUser, async (req, res, next
     }
     const publication = await pool.query(
       "INSERT INTO cap_platform_publications (user_id,campaign_id,platform,external_campaign_id,external_adset_id,external_ad_id,status,budget_amount,currency,destination_url,provider_response) VALUES ($1,$2,$3,$4,$5,$6,'paused',$7,$8,$9,$10::jsonb) RETURNING id,status,external_campaign_id,external_adset_id,external_ad_id,budget_amount,currency",
-      [req.capUser.id, campaign.id, platform, campaignResource, adsetResource, adResource, input.dailyBudget, platform === "meta" ? (req.body.currency || "USD") : "USD", input.destinationUrl, JSON.stringify({ creativeId: creativeResource })]
+      [req.capUser.id, campaign.id, platform, campaignResource, adsetResource, adResource, input.dailyBudget, publicationCurrency, input.destinationUrl, JSON.stringify({ creativeId: creativeResource })]
     );
     res.status(201).json({
       publication: publication.rows[0],
